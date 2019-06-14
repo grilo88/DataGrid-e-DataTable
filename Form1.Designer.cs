@@ -31,15 +31,16 @@
             this.dg = new System.Windows.Forms.DataGridView();
             this.btnCarregar = new System.Windows.Forms.Button();
             this.btnAplicar = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.SuspendLayout();
             // 
             // dg
             // 
             this.dg.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dg.Location = new System.Drawing.Point(114, 92);
+            this.dg.Location = new System.Drawing.Point(39, 77);
             this.dg.Name = "dg";
-            this.dg.Size = new System.Drawing.Size(479, 235);
+            this.dg.Size = new System.Drawing.Size(652, 314);
             this.dg.TabIndex = 0;
             // 
             // btnCarregar
@@ -62,11 +63,22 @@
             this.btnAplicar.UseVisualStyleBackColor = true;
             this.btnAplicar.Click += new System.EventHandler(this.BtnAplicar_Click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(453, 12);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(107, 23);
+            this.button1.TabIndex = 3;
+            this.button1.Text = "Aplicar 100x";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.Button1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnAplicar);
             this.Controls.Add(this.btnCarregar);
             this.Controls.Add(this.dg);
@@ -83,6 +95,7 @@
         private System.Windows.Forms.DataGridView dg;
         private System.Windows.Forms.Button btnCarregar;
         private System.Windows.Forms.Button btnAplicar;
+        private System.Windows.Forms.Button button1;
     }
 }
 

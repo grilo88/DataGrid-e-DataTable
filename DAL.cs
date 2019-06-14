@@ -10,7 +10,7 @@ namespace DataGridDataTable
 {
     public static class DAL
     {
-        static string strConexao = "Server=localhost,3741;Database=Teste;User Id=sa;Password=d120588$788455";
+        static string strConexao = "Server=localhost,3741;Database=Teste;User Id=sa;Password=d120588$788455;Pooling=true;Min Pool Size=5;Max Pool Size=160;Connect Timeout=60;Connection Lifetime=0;";
 
         public static DataTable Carregar()
         {
@@ -35,12 +35,12 @@ namespace DataGridDataTable
 
         public static async Task<int> Aplicar(DataTable dt, string tabela)
         {
-            int quantLote = 2;
+            int quantLote = 150;
 
             int afetados_add = 0,
                 afetados_del = 0,
                 afetados_alt = 0;
-            
+
             try
             {
                 DataTable add = dt.GetChanges(DataRowState.Added);
@@ -52,14 +52,12 @@ namespace DataGridDataTable
                 {
                     await con.OpenAsync();
                     com.Transaction = con.BeginTransaction(IsolationLevel.RepeatableRead);
-                    
-                    DataColumn id = dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).FirstOrDefault();
-                    int idx_id = dt.Columns.IndexOf(id);
 
+                    DataColumn id = dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).FirstOrDefault();
                     if (id == null)
-                    {
                         throw new Exception("É necessário criar uma coluna Auto Incremento");
-                    }
+
+                    int idx_id = dt.Columns.IndexOf(id);
 
                     if (add != null)
                     {
@@ -122,10 +120,12 @@ namespace DataGridDataTable
 
                         for (int r = 0, lote = 1; r < alt.Rows.Count; r++, lote++)
                         {
-                            object id_val = alt.Rows[r][idx_id, DataRowVersion.Original];
+                            object id_val = alt.Rows[r][idx_id];
 
-                            com.CommandText += $"UPDATE TOP 1 {tabela} " + 
-                                string.Join(",", cols.Select(col => $"SET {col.ColumnName}='{alt.Rows[r][alt.Columns.IndexOf(col)]}'")) +
+                            com.CommandText +=
+                                $"UPDATE TOP(1) {tabela} SET " +
+                                string.Join(",", cols.Select(
+                                    col => $"{col.ColumnName}='{alt.Rows[r][alt.Columns.IndexOf(col)]}'")) +
                                 $" WHERE {id}='{id_val}';\r\n";
 
                             if (lote == quantLote || r == alt.Rows.Count - 1)
@@ -141,11 +141,11 @@ namespace DataGridDataTable
 
                 dt.AcceptChanges();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                
+                throw;
             }
-            
+
             return afetados_add + afetados_del + afetados_alt;
         }
     }
