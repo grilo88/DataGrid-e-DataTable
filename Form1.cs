@@ -26,7 +26,7 @@ namespace DataGridDataTable
 
         private void BtnCarregar_Click(object sender, EventArgs e)
         {
-            DataTable dt = DAL.Carregar();
+            DataTable dt = DAL.Carregar("Tabela");
             dg.DataSource = dt;
         }
 
