@@ -19,7 +19,7 @@ namespace DataGridDataTable
 
     public static class DAL
     {
-        public static Banco Banco { get; private set; } = Banco.MySql;
+        public static Banco Banco { get; private set; } = Banco.MsSql;
         static string strConexao { get; set; }
 
         /// <summary>
@@ -123,8 +123,8 @@ namespace DataGridDataTable
         {
             try
             {
-                if (dt == null) throw new Exception("Intancie um novo DataTable");
-                if (dt.TableName == "") throw new Exception("Informe o nome da tabela no DataTable");
+                if (dt == null) throw new Exception("Instancie o DataTable");
+                if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
 
                 using (IDbConnection con = CrossConnection(strConexao))
                 using (IDbCommand com = CrossCommand(con))
@@ -151,6 +151,16 @@ namespace DataGridDataTable
                     select += $"{cols} FROM {PalavraBanco(dt.TableName)}";
                     com.CommandText = select + finalSelect;
 
+                    if (Banco == Banco.MsSql)
+                    {
+                        // Previne erro no DataGrid quando alterar dados da coluna AutoIncremento 
+                        // durante o union do recarregamento dos dados
+                        for (int i = 0; i < dt.PrimaryKey.Length; i++)
+                        {
+                            dt.PrimaryKey[i].ReadOnly = false; 
+                        }
+                    } // Se por acaso ocorrer também com outros bancos, este if deve ser removido. Não o conteúdo do if.
+
                     using (IDataReader dr = com.ExecuteReader(CommandBehavior.CloseConnection))
                     {
                         dt.BeginLoadData();
@@ -158,12 +168,16 @@ namespace DataGridDataTable
                         dt.EndLoadData();
                     }
 
-                    // Define a chave primária como sendo a coluna Auto Incremento
-                    dt.PrimaryKey =
-                            new DataColumn[1]
-                            {
-                                dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).First()
-                            };
+                    if (dt.PrimaryKey.Length == 0)
+                    {
+                        DataColumn id = dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).FirstOrDefault();
+                        if (id != null)
+                        {
+                            // Define a chave primária através da coluna Auto Incremento
+                            // Isto é necessário para realizar o union durante o recarregamento dos dados 
+                            dt.PrimaryKey = new DataColumn[1] { id };
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -331,10 +345,27 @@ namespace DataGridDataTable
                         {
                             object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
 
-                            sb.AppendLine(
-                                $"DELETE FROM {PalavraBanco(dt.TableName)} " +
-                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)};");
+                            string delete = "DELETE ";
+                            string finaldelete = "";
 
+                            switch (Banco)
+                            {
+                                case Banco.MySql:
+                                    finaldelete = " LIMIT 1";
+                                    break;
+                                case Banco.MsSql:
+                                    delete += "TOP(1) ";
+                                    break;
+                                default:
+                                    throw new NotImplementedException(nameof(Banco));
+                            }
+
+                            delete +=
+                                $"FROM {PalavraBanco(dt.TableName)} " +
+                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)}";
+
+                            sb.AppendLine(delete + finaldelete + ";");
+                                
                             if (lote == quantLote || r == del.Rows.Count - 1)
                             {
                                 com.CommandText = sb.ToString();
