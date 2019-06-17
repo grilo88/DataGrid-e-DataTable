@@ -26,13 +26,12 @@ namespace DataGridDataTable
 
         private void BtnCarregar_Click(object sender, EventArgs e)
         {
-            DataTable dt = DAL.Carregar("Tabela");
-            dg.DataSource = dt;
+            dg.DataSource = DAL.Carregar("Tabela");
         }
 
-        private void BtnAplicar_Click(object sender, EventArgs e)
+        private async void BtnAplicar_Click(object sender, EventArgs e)
         {
-            Task<int> tk = DAL.Aplicar((DataTable)dg.DataSource, "Tabela");
+            await DAL.Aplicar((DataTable)dg.DataSource);
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -44,7 +43,7 @@ namespace DataGridDataTable
 
             for (int i = 0; i < tarefas.Length; i++)
             {
-                tarefas[i] = DAL.Aplicar((DataTable)dg.DataSource, "Tabela");
+                tarefas[i] = DAL.Aplicar((DataTable)dg.DataSource);
             }
 
             Task.WaitAll(tarefas);

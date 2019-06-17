@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DataGridDataTable
 {
@@ -18,7 +19,7 @@ namespace DataGridDataTable
 
     public static class DAL
     {
-        public static Banco Banco { get; set; } = Banco.MySql;
+        public static Banco Banco { get; private set; } = Banco.MySql;
         static string strConexao { get; set; } 
 
         // Construtor Estático
@@ -97,24 +98,75 @@ namespace DataGridDataTable
 
         public static DataTable Carregar(string tabela)
         {
-            using (IDbConnection con = CrossConnection(strConexao))
-            using (IDbCommand com = CrossCommand(con))
+            DataTable dt = new DataTable();
+            try
             {
-                con.Open();
-
-                com.CommandText = $"SELECT * FROM {tabela}";
-                using (IDataReader dr = com.ExecuteReader())
+                using (IDbConnection con = CrossConnection(strConexao))
+                using (IDbCommand com = CrossCommand(con))
                 {
-                    DataTable dt = new DataTable();
+                    con.Open();
 
-                    dt.TableName = tabela;
-                    dt.BeginLoadData();
-                    dt.Load(dr);
-                    dt.EndLoadData();
-                    
-                    return dt;
+                    string tmpTabela = tabela;
+                    switch (Banco)
+                    {
+                        case Banco.MySql:
+                            tmpTabela = $"{tabela}";
+                            break;
+                        case Banco.MsSql:
+                            tmpTabela = $"[{tabela}]";
+                            break;
+                        default:
+                            break;
+                    }
+
+                    com.CommandText = $"SELECT * FROM {tabela} LIMIT 10";
+                    using (IDataReader dr = com.ExecuteReader())
+                    {
+                        dt.TableName = tabela;
+                        dt.BeginLoadData();
+                        dt.Load(dr);
+                        dt.EndLoadData();
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erro");
+            }
+            return dt;
+        }
+
+        //static string BancoDeDados(IDbConnection con, bool ponto = true)
+        //{
+        //    string bd = "";
+        //    switch (Banco)
+        //    {
+        //        case Banco.MySql:
+        //            bd = PalavraBanco(con.Database) + (ponto ? "." : "");
+        //            break;
+        //        case Banco.MsSql:
+        //            bd = PalavraBanco(con.Database) + (ponto ? ".." : "");
+        //            break;
+        //        default:
+        //            break;
+        //    }
+        //    return bd;
+        //}
+
+        static string PalavraBanco(string palavra)
+        {
+            switch (Banco)
+            {
+                case Banco.MySql:
+                    palavra = $"`{palavra}`";
+                    break;
+                case Banco.MsSql:
+                    palavra = $"[{palavra}]";
+                    break;
+                default:
+                    break;
+            }
+            return palavra;
         }
 
         static object ValorBanco(object valor)
@@ -123,7 +175,10 @@ namespace DataGridDataTable
             {
                 case Banco.MySql:
                     if (valor is bool) valor = (bool)valor ? 1 : 0;
-
+                    else if (valor is string)
+                    {
+                        valor = MySqlHelper.EscapeString((string)valor);
+                    }
                     break;
                 case Banco.MsSql:
                     valor = $"'{valor}'";
@@ -135,7 +190,7 @@ namespace DataGridDataTable
             return valor;
         }
 
-        public static async Task<int> Aplicar(DataTable dt, string tabela)
+        public static async Task<int> Aplicar(DataTable dt)
         {
             int quantLote = 150;
 
@@ -167,10 +222,10 @@ namespace DataGridDataTable
                             .Where(x => !x.AutoIncrement) // Ignora colunas Auto Incremento
                             .ToArray();
 
-                        string sColunas = string.Join(",", cols.Select(x => x.ColumnName));
+                        string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
 
                         string values = "", reg = "";
-                        string insertinto = $"INSERT INTO {tabela}(" + sColunas + ")VALUES";
+                        string insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}(" + sColunas + ")VALUES";
 
                         for (int r = 0, lote = 1; r < add.Rows.Count; r++, lote++)
                         {
@@ -204,7 +259,10 @@ namespace DataGridDataTable
                         for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                         {
                             object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
-                            com.CommandText += $"DELETE FROM {tabela} WHERE {id.ColumnName}='{id_val}';\r\n";
+
+                            com.CommandText +=
+                                $"DELETE FROM {PalavraBanco(dt.TableName)} " +
+                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)};\r\n";
 
                             if (lote == quantLote || r == del.Rows.Count - 1)
                             {
@@ -224,11 +282,27 @@ namespace DataGridDataTable
                         {
                             object id_val = alt.Rows[r][idx_id];
 
-                            com.CommandText +=
-                                $"UPDATE TOP(1) {tabela} SET " +
+                            string update = "UPDATE ";
+                            string finalUpdate = "";
+
+                            switch (Banco)
+                            {
+                                case Banco.MySql:
+                                    finalUpdate = " LIMIT 1";
+                                    break;
+                                case Banco.MsSql:
+                                    update += "TOP(1) ";
+                                    break;
+                                default:
+                                    throw new Exception(nameof(Banco));
+                            }
+
+                            update += $"{PalavraBanco(dt.TableName)} SET " +
                                 string.Join(",", cols.Select(
-                                    col => $"{col.ColumnName}={ValorBanco(alt.Rows[r][alt.Columns.IndexOf(col)])}")) +
-                                $" WHERE {id}='{id_val}';\r\n";
+                                    col => $"{PalavraBanco(col.ColumnName)}={ValorBanco(alt.Rows[r][alt.Columns.IndexOf(col)])}")) +
+                                $" WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)}";
+
+                            com.CommandText += update + finalUpdate + ";\r\n";
 
                             if (lote == quantLote || r == alt.Rows.Count - 1)
                             {
@@ -241,12 +315,12 @@ namespace DataGridDataTable
 
                     com.Transaction.Commit();
                 }
-
                 dt.AcceptChanges();
             }
             catch (Exception ex)
             {
-                throw;
+                MessageBox.Show(ex.Message, "Erro");
+                dt.RejectChanges();
             }
 
             return afetados_add + afetados_del + afetados_alt;
