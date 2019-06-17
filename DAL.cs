@@ -20,7 +20,14 @@ namespace DataGridDataTable
     public static class DAL
     {
         public static Banco Banco { get; private set; } = Banco.MySql;
-        static string strConexao { get; set; } 
+        static string strConexao { get; set; }
+
+        /// <summary>
+        /// Ao usar valores padrão, apenas as colunas de interesse serão selecionadas na gravação 
+        /// do banco de dados melhorando a performance do sistema. No caso do insert, campos preenchidos. 
+        /// No caso do update, campos alterados.
+        /// </summary>
+        public static bool UsarValoresPadrao { get; set; } = true;
 
         // Construtor Estático
         static DAL()
@@ -53,7 +60,7 @@ namespace DataGridDataTable
                     strConexao = "Server=localhost,3741;Database=Teste;User Id=sa;Password=d120588$788455;Pooling=true;Min Pool Size=5;Max Pool Size=160;Connect Timeout=60;Connection Lifetime=60;";
                     break;
                 default:
-                    throw new Exception(nameof(Banco));
+                    throw new NotImplementedException(nameof(Banco));
             }
         }
 
@@ -66,7 +73,7 @@ namespace DataGridDataTable
                 case Banco.MsSql:
                     return ((SqlConnection)con).OpenAsync();
                 default:
-                    throw new Exception(nameof(Banco));
+                    throw new NotImplementedException(nameof(Banco));
             }
         }
 
@@ -79,7 +86,7 @@ namespace DataGridDataTable
                 case Banco.MsSql:
                     return new SqlConnection(conexao);
                 default:
-                    throw new Exception(nameof(Banco));
+                    throw new NotImplementedException(nameof(Banco));
             }
         }
 
@@ -92,11 +99,26 @@ namespace DataGridDataTable
                 case Banco.MsSql:
                     return new SqlCommand("", (SqlConnection)con);
                 default:
-                    throw new Exception(nameof(Banco));
+                    throw new NotImplementedException(nameof(Banco));
             }
         }
 
-        public static DataTable Carregar(string tabela)
+        public static DataTable Schema(IDbCommand com)
+        {
+            if (com.CommandText == "")
+                throw new Exception("Deve ser chamado após CommandText for preenchido.");
+
+            DataTable schema = new DataTable();
+            using (IDataReader dr = com.ExecuteReader(CommandBehavior.SchemaOnly))
+            {
+                schema = dr.GetSchemaTable();
+            }
+            return schema;
+        }
+
+        public static DataTable Carregar(string tabela) => Carregar(tabela, null, -1);
+        public static DataTable Carregar(string tabela, int limite) => Carregar(tabela, null, limite);
+        public static DataTable Carregar(string tabela, string[] colunas, int limite)
         {
             DataTable dt = new DataTable();
             try
@@ -106,21 +128,27 @@ namespace DataGridDataTable
                 {
                     con.Open();
 
-                    string tmpTabela = tabela;
+                    string select = "SELECT ";
+                    string cols = colunas == null || colunas.Length == 0 ? "*" : string.Join(",", colunas.Select(col => PalavraBanco(col)));
+                    string finalSelect = "";
                     switch (Banco)
                     {
                         case Banco.MySql:
-                            tmpTabela = $"{tabela}";
+                            if (limite > -1)
+                                finalSelect = $" LIMIT {limite}";
                             break;
                         case Banco.MsSql:
-                            tmpTabela = $"[{tabela}]";
+                            if (limite > -1)
+                                select += $"TOP({limite}) ";
                             break;
                         default:
-                            break;
+                            throw new NotImplementedException(nameof(Banco));
                     }
 
-                    com.CommandText = $"SELECT * FROM {tabela} LIMIT 10";
-                    using (IDataReader dr = com.ExecuteReader())
+                    select += $"{cols} FROM {PalavraBanco(tabela)}";
+                    com.CommandText = select + finalSelect;
+
+                    using (IDataReader dr = com.ExecuteReader(CommandBehavior.CloseConnection))
                     {
                         dt.TableName = tabela;
                         dt.BeginLoadData();
@@ -148,7 +176,7 @@ namespace DataGridDataTable
         //            bd = PalavraBanco(con.Database) + (ponto ? ".." : "");
         //            break;
         //        default:
-        //            break;
+        //            throw new NotImplementedException(nameof(Banco));
         //    }
         //    return bd;
         //}
@@ -164,7 +192,7 @@ namespace DataGridDataTable
                     palavra = $"[{palavra}]";
                     break;
                 default:
-                    break;
+                    throw new NotImplementedException(nameof(Banco));
             }
             return palavra;
         }
@@ -174,17 +202,24 @@ namespace DataGridDataTable
             switch (Banco)
             {
                 case Banco.MySql:
-                    if (valor is bool) valor = (bool)valor ? 1 : 0;
+                    if (valor is DBNull || valor is null)
+                    {
+                        valor = "NULL";
+                    }
+                    else if (valor is bool)
+                    {
+                        valor = (bool)valor ? 1 : 0;
+                    }
                     else if (valor is string)
                     {
-                        valor = MySqlHelper.EscapeString((string)valor);
+                        valor = $"'{MySqlHelper.EscapeString((string)valor)}'";
                     }
                     break;
                 case Banco.MsSql:
                     valor = $"'{valor}'";
                     break;
                 default:
-                    throw new Exception(nameof(Banco));
+                    throw new NotImplementedException(nameof(Banco));
             }
 
             return valor;
@@ -192,6 +227,7 @@ namespace DataGridDataTable
 
         public static async Task<int> Aplicar(DataTable dt)
         {
+            StringBuilder sb = new StringBuilder();
             int quantLote = 150;
 
             int afetados_add = 0,
@@ -218,23 +254,44 @@ namespace DataGridDataTable
 
                     if (add != null)
                     {
-                        DataColumn[] cols = add.Columns.Cast<DataColumn>()
-                            .Where(x => !x.AutoIncrement) // Ignora colunas Auto Incremento
-                            .ToArray();
+                        sb.Clear();
+                        string insertinto = ""; 
 
-                        string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
+                        DataColumn[] cols = null;
+                        if (!UsarValoresPadrao)
+                        {
+                            // Seleciona todas as colunas na inserção de valores
+                            cols = add.Columns.Cast<DataColumn>()
+                             .Where(x => !x.AutoIncrement) // Ignora colunas Auto Incremento
+                             .ToArray();
+
+                            string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
+                            insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}({sColunas})VALUES";
+                        }
 
                         string values = "", reg = "";
-                        string insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}(" + sColunas + ")VALUES";
-
                         for (int r = 0, lote = 1; r < add.Rows.Count; r++, lote++)
                         {
-                            #region Monta Registro
-                            for (int c = 0; c < cols.Count(); c++)
+                            #region Monta valores da row atual
+                            if (UsarValoresPadrao)
                             {
-                                if (reg != "") reg += ",";
-                                reg += $"{ValorBanco(add.Rows[r][add.Columns.IndexOf(cols[c])])}";
+                                DataColumn[] tmp_cols = SelecionarColunas(add, r, true);
+                                if (cols == null || !tmp_cols.SequenceEqual(cols)) // Colunas atuais são diferentes das anteriores considerando ordem e valores?
+                                {
+                                    cols = tmp_cols;
+
+                                    if (values != "") // Adiciona insert se possuir valores
+                                    {
+                                        sb.Append(insertinto + values + ";\r\n");
+                                        values = "";
+                                    }
+
+                                    string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
+                                    insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}({sColunas})VALUES";
+                                }
                             }
+
+                            reg += string.Join(",", cols.Select(col => $"{ValorBanco(add.Rows[r][add.Columns.IndexOf(col)])}"));
                             #endregion
 
                             #region Monta lista Values
@@ -247,7 +304,12 @@ namespace DataGridDataTable
                             if (lote == quantLote ||
                                 r == add.Rows.Count - 1 /* Último Row? */)
                             {
-                                com.CommandText = insertinto + values;
+                                if (values != "")
+                                {
+                                    sb.AppendLine(insertinto + values + ";");
+                                }
+
+                                com.CommandText = sb.ToString();
                                 afetados_add += com.ExecuteNonQuery();
                                 lote = 0;
                             }
@@ -256,28 +318,26 @@ namespace DataGridDataTable
                     }
                     if (del != null)
                     {
+                        sb.Clear();
                         for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                         {
                             object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
 
-                            com.CommandText +=
+                            sb.AppendLine(
                                 $"DELETE FROM {PalavraBanco(dt.TableName)} " +
-                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)};\r\n";
+                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)};");
 
                             if (lote == quantLote || r == del.Rows.Count - 1)
                             {
+                                com.CommandText = sb.ToString();
                                 afetados_del += com.ExecuteNonQuery();
-                                com.CommandText = "";
                                 lote = 0;
                             }
                         }
                     }
                     if (alt != null)
                     {
-                        DataColumn[] cols = alt.Columns.Cast<DataColumn>()
-                            .Where(x => !x.AutoIncrement) // Ignora colunas Auto Incremento
-                            .ToArray();
-
+                        sb.Clear();
                         for (int r = 0, lote = 1; r < alt.Rows.Count; r++, lote++)
                         {
                             object id_val = alt.Rows[r][idx_id];
@@ -288,26 +348,28 @@ namespace DataGridDataTable
                             switch (Banco)
                             {
                                 case Banco.MySql:
-                                    finalUpdate = " LIMIT 1";
+                                    finalUpdate = " LIMIT 1"; // Garante aumento de desempenho
                                     break;
                                 case Banco.MsSql:
-                                    update += "TOP(1) ";
+                                    update += "TOP(1) "; // Garante aumento de desempenho
                                     break;
                                 default:
-                                    throw new Exception(nameof(Banco));
+                                    throw new NotImplementedException(nameof(Banco));
                             }
 
-                            update += $"{PalavraBanco(dt.TableName)} SET " +
-                                string.Join(",", cols.Select(
+                            DataColumn[] cols = SelecionarColunas(alt, r, false);
+
+                            update += $"{PalavraBanco(dt.TableName)} " +
+                                "SET " + string.Join(",", cols.Select(
                                     col => $"{PalavraBanco(col.ColumnName)}={ValorBanco(alt.Rows[r][alt.Columns.IndexOf(col)])}")) +
                                 $" WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)}";
 
-                            com.CommandText += update + finalUpdate + ";\r\n";
+                            sb.AppendLine(update + finalUpdate + ";");
 
                             if (lote == quantLote || r == alt.Rows.Count - 1)
                             {
+                                com.CommandText = sb.ToString();
                                 afetados_alt += com.ExecuteNonQuery();
-                                com.CommandText = "";
                                 lote = 0;
                             }
                         }
@@ -324,6 +386,50 @@ namespace DataGridDataTable
             }
 
             return afetados_add + afetados_del + afetados_alt;
+        }
+
+        /// <summary>
+        /// Seleciona as colunas preenchidas ou alteradas na Row atual
+        /// </summary>
+        /// <param name="dt">Datatable que a Row está associada</param>
+        /// <param name="r">Índice do Row</param>
+        /// <returns></returns>
+        private static DataColumn[] SelecionarColunas(DataTable dt, int r, bool insert)
+        {
+            List<DataColumn> tmp_cols = new List<DataColumn>();
+            for (int col = 0; col < dt.Columns.Count; col++)
+            {
+                if (dt.Columns[col].AutoIncrement) continue; // Ignora coluna Auto Incremento
+
+                if (insert)
+                {
+                    // Obtém as colunas preenchidas
+                    object current = dt.Rows[r].Field<object>(col, DataRowVersion.Current);  // Obtém o valor atual
+
+                    if (current != null)
+                        tmp_cols.Add(dt.Columns[col]);
+                }
+                else
+                {
+                    // Obtém as colunas alteradas
+                    object original = dt.Rows[r].Field<object>(col, DataRowVersion.Original);  // Obtém o valor original
+                    object current = dt.Rows[r].Field<object>(col, DataRowVersion.Current);    // Obtém o valor alterado
+
+                    bool selecionar = false;
+                    if (!(original is null && current is null)) // Ignora se ambos são nulos.
+                    {
+                        if (original is null ^ current is null) // Previne erro de referência a objeto quando equals é invocado em objeto nulo. Visto que um dos dois são nulos isso significa que os valores são diferentes. No entanto, campo alterado!
+                            selecionar = true;
+                        else if (!original.Equals(current)) // Compara valores em seu respectivo tipo quando ambos definitivamente possuem valores, ou seja, nenhum é nulo.
+                            selecionar = true;
+                    }
+
+                    if (selecionar)
+                        tmp_cols.Add(dt.Columns[col]);
+                }
+            }
+
+            return tmp_cols.ToArray();
         }
     }
 }
