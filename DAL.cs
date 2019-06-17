@@ -116,13 +116,16 @@ namespace DataGridDataTable
             return schema;
         }
 
-        public static DataTable Carregar(string tabela) => Carregar(tabela, null, -1);
-        public static DataTable Carregar(string tabela, int limite) => Carregar(tabela, null, limite);
-        public static DataTable Carregar(string tabela, string[] colunas, int limite)
+        public static void Carregar(ref DataTable dt) => Carregar(ref dt, null, -1);
+        public static void Carregar(ref DataTable dt, int limite) => Carregar(ref dt, null, limite);
+
+        public static void Carregar(ref DataTable dt, string[] colunas, int limite)
         {
-            DataTable dt = new DataTable();
             try
             {
+                if (dt == null) throw new Exception("Intancie um novo DataTable");
+                if (dt.TableName == "") throw new Exception("Informe o nome da tabela no DataTable");
+
                 using (IDbConnection con = CrossConnection(strConexao))
                 using (IDbCommand com = CrossCommand(con))
                 {
@@ -145,23 +148,28 @@ namespace DataGridDataTable
                             throw new NotImplementedException(nameof(Banco));
                     }
 
-                    select += $"{cols} FROM {PalavraBanco(tabela)}";
+                    select += $"{cols} FROM {PalavraBanco(dt.TableName)}";
                     com.CommandText = select + finalSelect;
 
                     using (IDataReader dr = com.ExecuteReader(CommandBehavior.CloseConnection))
                     {
-                        dt.TableName = tabela;
                         dt.BeginLoadData();
                         dt.Load(dr);
                         dt.EndLoadData();
                     }
+
+                    // Define a chave primária como sendo a coluna Auto Incremento
+                    dt.PrimaryKey =
+                            new DataColumn[1]
+                            {
+                                dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).First()
+                            };
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Erro");
             }
-            return dt;
         }
 
         //static string BancoDeDados(IDbConnection con, bool ponto = true)
