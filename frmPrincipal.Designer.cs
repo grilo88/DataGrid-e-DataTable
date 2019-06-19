@@ -1,6 +1,6 @@
 ﻿namespace DataGridDataTable
 {
-    partial class Form1
+    partial class frmPrincipal
     {
         /// <summary>
         /// Variável de designer necessária.

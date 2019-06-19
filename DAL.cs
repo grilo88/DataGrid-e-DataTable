@@ -19,7 +19,7 @@ namespace DataGridDataTable
 
     public static class DAL
     {
-        public static Banco Banco { get; private set; } = Banco.MsSql;
+        public static Banco Banco { get; private set; } = Banco.MySql;
         static string strConexao { get; set; }
 
         /// <summary>
@@ -28,6 +28,11 @@ namespace DataGridDataTable
         /// No caso do update, campos alterados.
         /// </summary>
         public static bool UsarValoresPadrao { get; set; } = true;
+
+        /// <summary>
+        /// Simplifica o comando Delete reduzindo significamente o consumo de tráfego na conexão
+        /// </summary>
+        public static bool UsarDeleteWhereIn { get; set; } = true;
 
         // Construtor Estático
         static DAL()
@@ -121,11 +126,12 @@ namespace DataGridDataTable
 
         public static void Carregar(ref DataTable dt, string[] colunas, int limite)
         {
+            if (dt == null) throw new Exception("Instancie o DataTable");
+            if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
+            if (dt.PrimaryKey.Length == 0 && dt.Rows.Count > 0) throw new Exception("É necessário possuir uma coluna chave primária com auto-incremento no DataTable para realizar a união (atualização) dos registros neste recarregamento de dados. Obtenha o modelo através do método estático DAL.Carregar() sobre a definição de chave-primária.");
+
             try
             {
-                if (dt == null) throw new Exception("Instancie o DataTable");
-                if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
-
                 using (IDbConnection con = CrossConnection(strConexao))
                 using (IDbCommand com = CrossCommand(con))
                 {
@@ -203,6 +209,11 @@ namespace DataGridDataTable
         //    return bd;
         //}
 
+        /// <summary>
+        /// Previne erros de comando sql quando uma palavra entra em conflito com alguma palavra-chave do banco de dados.
+        /// </summary>
+        /// <param name="palavra"></param>
+        /// <returns></returns>
         static string PalavraBanco(string palavra)
         {
             switch (Banco)
@@ -219,6 +230,11 @@ namespace DataGridDataTable
             return palavra;
         }
 
+        /// <summary>
+        /// Converte o valor para o formato aceito pelo interpretador de comandos sql do banco de dados.
+        /// </summary>
+        /// <param name="valor"></param>
+        /// <returns></returns>
         static object ValorBanco(object valor)
         {
             switch (Banco)
@@ -247,6 +263,12 @@ namespace DataGridDataTable
             return valor;
         }
 
+        /// <summary>
+        /// Aplica as alterações ao banco de dados considerando operações de 
+        /// inclusão, atualização e deleção de registros em um escopo de transação.
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <returns></returns>
         public static async Task<int> Aplicar(DataTable dt)
         {
             StringBuilder sb = new StringBuilder();
@@ -279,15 +301,15 @@ namespace DataGridDataTable
                         sb.Clear();
                         string insertinto = ""; 
 
-                        DataColumn[] cols = null;
+                        DataColumn[] sel_cols = null;
                         if (!UsarValoresPadrao)
                         {
                             // Seleciona todas as colunas na inserção de valores
-                            cols = add.Columns.Cast<DataColumn>()
+                            sel_cols = add.Columns.Cast<DataColumn>()
                              .Where(x => !x.AutoIncrement) // Ignora colunas Auto Incremento
                              .ToArray();
 
-                            string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
+                            string sColunas = string.Join(",", sel_cols.Select(x => PalavraBanco(x.ColumnName)));
                             insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}({sColunas})VALUES";
                         }
 
@@ -298,25 +320,25 @@ namespace DataGridDataTable
                             if (UsarValoresPadrao)
                             {
                                 DataColumn[] tmp_cols = SelecionarColunas(add, r, true);
-                                if (cols == null || !tmp_cols.SequenceEqual(cols)) // Colunas atuais são diferentes das anteriores considerando ordem e valores?
+                                if (sel_cols == null || !tmp_cols.SequenceEqual(sel_cols)) // Colunas desta row são diferentes das anteriores considerando a ordem e o valor?
                                 {
-                                    cols = tmp_cols;
+                                    sel_cols = tmp_cols;
 
                                     if (values != "") // Adiciona insert se possuir valores
                                     {
-                                        sb.Append(insertinto + values + ";\r\n");
+                                        sb.AppendLine(insertinto + values + ";");
                                         values = "";
                                     }
 
-                                    string sColunas = string.Join(",", cols.Select(x => PalavraBanco(x.ColumnName)));
+                                    string sColunas = string.Join(",", sel_cols.Select(x => PalavraBanco(x.ColumnName)));
                                     insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}({sColunas})VALUES";
                                 }
                             }
 
-                            reg += string.Join(",", cols.Select(col => $"{ValorBanco(add.Rows[r][add.Columns.IndexOf(col)])}"));
+                            reg += string.Join(",", sel_cols.Select(col => $"{ValorBanco(add.Rows[r][add.Columns.IndexOf(col)])}"));
                             #endregion
 
-                            #region Monta lista Values
+                            #region Monta lista de Values
                             if (values != "") values += ",";
                             values += "(" + reg + ")";
                             reg = "";
@@ -341,36 +363,55 @@ namespace DataGridDataTable
                     if (del != null)
                     {
                         sb.Clear();
-                        for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
+                        if (UsarDeleteWhereIn)
                         {
-                            object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
-
-                            string delete = "DELETE ";
-                            string finaldelete = "";
-
-                            switch (Banco)
+                            for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                             {
-                                case Banco.MySql:
-                                    finaldelete = " LIMIT 1";
-                                    break;
-                                case Banco.MsSql:
-                                    delete += "TOP(1) ";
-                                    break;
-                                default:
-                                    throw new NotImplementedException(nameof(Banco));
+                                object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
+
+                                sb.Append((sb.Length > 0 ? ",": "") + ValorBanco(id_val));
+
+                                if (lote == quantLote || r == del.Rows.Count - 1)
+                                {
+                                    com.CommandText = $"DELETE FROM {PalavraBanco(dt.TableName)} WHERE {PalavraBanco(id.ColumnName)} IN ({sb.ToString()})" ;
+                                    afetados_del += com.ExecuteNonQuery();
+                                    lote = 0;
+                                }
                             }
-
-                            delete +=
-                                $"FROM {PalavraBanco(dt.TableName)} " +
-                                $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)}";
-
-                            sb.AppendLine(delete + finaldelete + ";");
-                                
-                            if (lote == quantLote || r == del.Rows.Count - 1)
+                        }
+                        else
+                        {
+                            for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                             {
-                                com.CommandText = sb.ToString();
-                                afetados_del += com.ExecuteNonQuery();
-                                lote = 0;
+                                object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
+
+                                string delete = "DELETE ";
+                                string finaldelete = "";
+
+                                switch (Banco)
+                                {
+                                    case Banco.MySql:
+                                        finaldelete = " LIMIT 1";
+                                        break;
+                                    case Banco.MsSql:
+                                        delete += "TOP(1) ";
+                                        break;
+                                    default:
+                                        throw new NotImplementedException(nameof(Banco));
+                                }
+
+                                delete +=
+                                    $"FROM {PalavraBanco(dt.TableName)} " +
+                                    $"WHERE {PalavraBanco(id.ColumnName)}={ValorBanco(id_val)}";
+
+                                sb.AppendLine(delete + finaldelete + ";");
+
+                                if (lote == quantLote || r == del.Rows.Count - 1)
+                                {
+                                    com.CommandText = sb.ToString();
+                                    afetados_del += com.ExecuteNonQuery();
+                                    lote = 0;
+                                }
                             }
                         }
                     }
@@ -428,14 +469,15 @@ namespace DataGridDataTable
         }
 
         /// <summary>
-        /// Seleciona as colunas preenchidas ou alteradas na Row atual
+        /// Seleciona as colunas preenchidas ou alteradas na Row atual.
         /// </summary>
-        /// <param name="dt">Datatable que a Row está associada</param>
-        /// <param name="r">Índice do Row</param>
+        /// <param name="dt">Datatable que a Row está associada.</param>
+        /// <param name="row">Índice do Row.</param>
+        /// <param name="insert">Tipo de operação, se true, insert, caso contrário, update.</param>
         /// <returns></returns>
-        private static DataColumn[] SelecionarColunas(DataTable dt, int r, bool insert)
+        private static DataColumn[] SelecionarColunas(DataTable dt, int row, bool insert)
         {
-            List<DataColumn> tmp_cols = new List<DataColumn>();
+            List<DataColumn> sel_cols = new List<DataColumn>();
             for (int col = 0; col < dt.Columns.Count; col++)
             {
                 if (dt.Columns[col].AutoIncrement) continue; // Ignora coluna Auto Incremento
@@ -443,32 +485,32 @@ namespace DataGridDataTable
                 if (insert)
                 {
                     // Obtém as colunas preenchidas
-                    object current = dt.Rows[r].Field<object>(col, DataRowVersion.Current);  // Obtém o valor atual
+                    object current = dt.Rows[row].Field<object>(col, DataRowVersion.Current);  // Obtém o valor atual
 
                     if (current != null)
-                        tmp_cols.Add(dt.Columns[col]);
+                        sel_cols.Add(dt.Columns[col]);
                 }
                 else
                 {
                     // Obtém as colunas alteradas
-                    object original = dt.Rows[r].Field<object>(col, DataRowVersion.Original);  // Obtém o valor original
-                    object current = dt.Rows[r].Field<object>(col, DataRowVersion.Current);    // Obtém o valor alterado
+                    object original = dt.Rows[row].Field<object>(col, DataRowVersion.Original);  // Obtém o valor original
+                    object current = dt.Rows[row].Field<object>(col, DataRowVersion.Current);    // Obtém o valor alterado
 
                     bool selecionar = false;
                     if (!(original is null && current is null)) // Ignora se ambos são nulos.
                     {
-                        if (original is null ^ current is null) // Previne erro de referência a objeto quando equals é invocado em objeto nulo. Visto que um dos dois são nulos isso significa que os valores são diferentes. No entanto, campo alterado!
+                        if (original is null ^ current is null) // Previne erro de referência a objeto quando equals é invocado em objeto nulo antecipando o resultado. Visto que um dos dois são nulos isso significa que os valores são diferentes. No entanto, campo está alterado!
                             selecionar = true;
-                        else if (!original.Equals(current)) // Compara valores em seu respectivo tipo quando ambos definitivamente possuem valores, ou seja, nenhum é nulo.
+                        else if (!original.Equals(current)) // Compara valores em seu respectivo tipo quando ambos definitivamente possuem valores, ou seja, nenhum valor é nulo.
                             selecionar = true;
                     }
 
                     if (selecionar)
-                        tmp_cols.Add(dt.Columns[col]);
+                        sel_cols.Add(dt.Columns[col]);
                 }
             }
 
-            return tmp_cols.ToArray();
+            return sel_cols.ToArray();
         }
     }
 }

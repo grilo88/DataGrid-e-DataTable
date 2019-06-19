@@ -10,11 +10,11 @@ using System.Windows.Forms;
 
 namespace DataGridDataTable
 {
-    public partial class Form1 : Form
+    public partial class frmPrincipal : Form
     {
         DataTable dt;
 
-        public Form1()
+        public frmPrincipal()
         {
             InitializeComponent();
         }
@@ -27,7 +27,7 @@ namespace DataGridDataTable
 
         private void BtnCarregar_Click(object sender, EventArgs e)
         {
-            DAL.Carregar(ref dt, -1);
+            DAL.Carregar(ref dt);
             dg.DataSource = dt;
         }
 
