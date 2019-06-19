@@ -121,10 +121,10 @@ namespace DataGridDataTable
             return schema;
         }
 
-        public static void Carregar(ref DataTable dt) => Carregar(ref dt, null, -1);
-        public static void Carregar(ref DataTable dt, int limite) => Carregar(ref dt, null, limite);
+        public static DataTable Carregar(DataTable dt) => Carregar(dt, null, -1);
+        public static DataTable Carregar(DataTable dt, int limite) => Carregar(dt, null, limite);
 
-        public static void Carregar(ref DataTable dt, string[] colunas, int limite)
+        public static DataTable Carregar(DataTable dt, string[] colunas, int limite)
         {
             if (dt == null) throw new Exception("Instancie o DataTable");
             if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
@@ -190,6 +190,8 @@ namespace DataGridDataTable
             {
                 MessageBox.Show(ex.Message, "Erro");
             }
+
+            return dt;
         }
 
         //static string BancoDeDados(IDbConnection con, bool ponto = true)

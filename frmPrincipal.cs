@@ -21,14 +21,17 @@ namespace DataGridDataTable
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            dt = new DataTable("Tabela");
             BtnCarregar_Click(sender, e);
         }
 
         private void BtnCarregar_Click(object sender, EventArgs e)
         {
-            DAL.Carregar(ref dt);
-            dg.DataSource = dt;
+            if (dg.DataSource == null)
+            {
+                dg.DataSource = new DataTable("Tabela");
+            }
+
+            dg.DataSource = DAL.Carregar((DataTable)dg.DataSource);
         }
 
         private async void BtnAplicar_Click(object sender, EventArgs e)
