@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,12 +15,13 @@ namespace DataGridDataTable
     public enum Banco
     {
         MySql = 1,
-        MsSql = 2
+        MsSql = 2,
+        SqLite = 3
     }
 
     public static class DAL
     {
-        public static Banco Banco { get; private set; } = Banco.MySql;
+        public static Banco Banco { get; private set; } = Banco.SqLite;
         static string strConexao { get; set; }
 
         /// <summary>
@@ -40,29 +42,38 @@ namespace DataGridDataTable
             switch (Banco)
             {
                 case Banco.MySql:
-                    MySqlConnectionStringBuilder sb = new MySqlConnectionStringBuilder();
+                    MySqlConnectionStringBuilder sb_mysql = new MySqlConnectionStringBuilder();
 
                     // Conexão
-                    sb.ConnectionTimeout = 60;
-                    sb.Server = "localhost";
-                    sb.UserID = "root";
-                    sb.Password = "123456";
-                    sb.Database = "Teste";
+                    sb_mysql.ConnectionTimeout = 5;
+                    sb_mysql.Server = "localhost";
+                    sb_mysql.UserID = "root";
+                    sb_mysql.Password = "123456";
+                    sb_mysql.Database = "Teste";
 
                     // Segurança
-                    sb.SslMode = MySqlSslMode.None;
-                    sb.AllowPublicKeyRetrieval = true;
+                    sb_mysql.SslMode = MySqlSslMode.None;
+                    sb_mysql.AllowPublicKeyRetrieval = true;
 
                     // Pool
-                    sb.Pooling = true;
-                    sb.MinimumPoolSize = 5;
-                    sb.MaximumPoolSize = 160;
-                    sb.ConnectionLifeTime = 60;
+                    sb_mysql.Pooling = true;
+                    sb_mysql.MinimumPoolSize = 5;
+                    sb_mysql.MaximumPoolSize = 160;
+                    sb_mysql.ConnectionLifeTime = 60;
 
-                    strConexao = sb.ToString();
+                    strConexao = sb_mysql.ToString();
                     break;
                 case Banco.MsSql:
                     strConexao = "Server=localhost,3741;Database=Teste;User Id=sa;Password=d120588$788455;Pooling=true;Min Pool Size=5;Max Pool Size=160;Connect Timeout=60;Connection Lifetime=60;";
+                    break;
+                case Banco.SqLite:
+                    SQLiteConnectionStringBuilder sb_sqlite = new SQLiteConnectionStringBuilder();
+                    sb_sqlite.DataSource = @"..\..\sqlite.db3";
+                    sb_sqlite.Password = "";
+                    sb_sqlite.Pooling = true;
+                    sb_sqlite.Version = 3;
+
+                    strConexao = sb_sqlite.ToString();
                     break;
                 default:
                     throw new NotImplementedException(nameof(Banco));
@@ -77,6 +88,8 @@ namespace DataGridDataTable
                     return ((MySqlConnection)con).OpenAsync();
                 case Banco.MsSql:
                     return ((SqlConnection)con).OpenAsync();
+                case Banco.SqLite:
+                    return ((SQLiteConnection)con).OpenAsync();
                 default:
                     throw new NotImplementedException(nameof(Banco));
             }
@@ -90,6 +103,8 @@ namespace DataGridDataTable
                     return new MySqlConnection(conexao);
                 case Banco.MsSql:
                     return new SqlConnection(conexao);
+                case Banco.SqLite:
+                    return new SQLiteConnection(conexao);
                 default:
                     throw new NotImplementedException(nameof(Banco));
             }
@@ -103,6 +118,8 @@ namespace DataGridDataTable
                     return new MySqlCommand("", (MySqlConnection)con);
                 case Banco.MsSql:
                     return new SqlCommand("", (SqlConnection)con);
+                case Banco.SqLite:
+                    return new SQLiteCommand((SQLiteConnection)con);
                 default:
                     throw new NotImplementedException(nameof(Banco));
             }
@@ -143,6 +160,7 @@ namespace DataGridDataTable
                     switch (Banco)
                     {
                         case Banco.MySql:
+                        case Banco.SqLite:
                             if (limite > -1)
                                 finalSelect = $" LIMIT {limite}";
                             break;
@@ -200,6 +218,7 @@ namespace DataGridDataTable
         //    switch (Banco)
         //    {
         //        case Banco.MySql:
+        //        case Banco.SqLite:
         //            bd = PalavraBanco(con.Database) + (ponto ? "." : "");
         //            break;
         //        case Banco.MsSql:
@@ -221,6 +240,7 @@ namespace DataGridDataTable
             switch (Banco)
             {
                 case Banco.MySql:
+                case Banco.SqLite:
                     palavra = $"`{palavra}`";
                     break;
                 case Banco.MsSql:
@@ -242,6 +262,7 @@ namespace DataGridDataTable
             switch (Banco)
             {
                 case Banco.MySql:
+                case Banco.SqLite:
                     if (valor is DBNull || valor is null)
                     {
                         valor = "NULL";
@@ -290,7 +311,20 @@ namespace DataGridDataTable
                 using (IDbCommand com = CrossCommand(con))
                 {
                     await OpenAsync(con);
-                    com.Transaction = con.BeginTransaction(IsolationLevel.RepeatableRead);
+
+                    switch (Banco)
+                    {
+                        case Banco.MySql:
+                        case Banco.MsSql:
+                            com.Transaction = con.BeginTransaction(IsolationLevel.RepeatableRead);
+                            break;
+                        case Banco.SqLite:
+                            // SQlite não dá suporte para IsolationLevel.RepeatableRead
+                            com.Transaction = con.BeginTransaction(IsolationLevel.ReadCommitted);
+                            break;
+                        default:
+                            throw new NotImplementedException(nameof(Banco));
+                    }
 
                     DataColumn id = dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).FirstOrDefault();
                     if (id == null)
@@ -370,7 +404,6 @@ namespace DataGridDataTable
                             for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                             {
                                 object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
-
                                 sb.Append((sb.Length > 0 ? ",": "") + ValorBanco(id_val));
 
                                 if (lote == quantLote || r == del.Rows.Count - 1)
@@ -397,6 +430,9 @@ namespace DataGridDataTable
                                         break;
                                     case Banco.MsSql:
                                         delete += "TOP(1) ";
+                                        break;
+                                    case Banco.SqLite:
+                                        // Não dá suporte para LIMIT na instrução DELETE
                                         break;
                                     default:
                                         throw new NotImplementedException(nameof(Banco));
@@ -434,6 +470,9 @@ namespace DataGridDataTable
                                     break;
                                 case Banco.MsSql:
                                     update += "TOP(1) "; // Garante aumento de desempenho
+                                    break;
+                                case Banco.SqLite:
+                                    // Não dá suporte para LIMIT na instrução UPDATE
                                     break;
                                 default:
                                     throw new NotImplementedException(nameof(Banco));
