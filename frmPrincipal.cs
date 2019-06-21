@@ -12,8 +12,6 @@ namespace DataGridDataTable
 {
     public partial class frmPrincipal : Form
     {
-        DataTable dt;
-
         public frmPrincipal()
         {
             InitializeComponent();
@@ -56,6 +54,12 @@ namespace DataGridDataTable
             MessageBox.Show(
                 $"Tarefas executadas com sucesso em {Environment.TickCount - tick}ms.\r\n" +
                 $"Registros afetados: {tarefas.Sum(x => x.Result)}");
+        }
+
+        private void VirtualDataGridToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmVirtualDataGrid frm = new frmVirtualDataGrid();
+            frm.ShowDialog();
         }
     }
 }

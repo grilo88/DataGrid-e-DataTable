@@ -32,7 +32,10 @@
             this.btnCarregar = new System.Windows.Forms.Button();
             this.btnAplicar = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.virtualDataGridToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // dg
@@ -45,7 +48,7 @@
             // 
             // btnCarregar
             // 
-            this.btnCarregar.Location = new System.Drawing.Point(114, 12);
+            this.btnCarregar.Location = new System.Drawing.Point(39, 397);
             this.btnCarregar.Name = "btnCarregar";
             this.btnCarregar.Size = new System.Drawing.Size(75, 23);
             this.btnCarregar.TabIndex = 1;
@@ -55,7 +58,7 @@
             // 
             // btnAplicar
             // 
-            this.btnAplicar.Location = new System.Drawing.Point(195, 12);
+            this.btnAplicar.Location = new System.Drawing.Point(616, 397);
             this.btnAplicar.Name = "btnAplicar";
             this.btnAplicar.Size = new System.Drawing.Size(75, 23);
             this.btnAplicar.TabIndex = 2;
@@ -73,7 +76,24 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.Button1_Click);
             // 
-            // Form1
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.virtualDataGridToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(800, 24);
+            this.menuStrip1.TabIndex = 4;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // virtualDataGridToolStripMenuItem
+            // 
+            this.virtualDataGridToolStripMenuItem.Name = "virtualDataGridToolStripMenuItem";
+            this.virtualDataGridToolStripMenuItem.Size = new System.Drawing.Size(102, 20);
+            this.virtualDataGridToolStripMenuItem.Text = "Virtual DataGrid";
+            this.virtualDataGridToolStripMenuItem.Click += new System.EventHandler(this.VirtualDataGridToolStripMenuItem_Click);
+            // 
+            // frmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -82,11 +102,16 @@
             this.Controls.Add(this.btnAplicar);
             this.Controls.Add(this.btnCarregar);
             this.Controls.Add(this.dg);
-            this.Name = "Form1";
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
+            this.Name = "frmPrincipal";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dg)).EndInit();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -96,6 +121,8 @@
         private System.Windows.Forms.Button btnCarregar;
         private System.Windows.Forms.Button btnAplicar;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem virtualDataGridToolStripMenuItem;
     }
 }
 

@@ -58,13 +58,26 @@ namespace DataGridDataTable
                     // Pool
                     sb_mysql.Pooling = true;
                     sb_mysql.MinimumPoolSize = 5;
-                    sb_mysql.MaximumPoolSize = 160;
+                    sb_mysql.MaximumPoolSize = 15;
                     sb_mysql.ConnectionLifeTime = 60;
 
                     strConexao = sb_mysql.ToString();
                     break;
                 case Banco.MsSql:
-                    strConexao = "Server=localhost,3741;Database=Teste;User Id=sa;Password=d120588$788455;Pooling=true;Min Pool Size=5;Max Pool Size=160;Connect Timeout=60;Connection Lifetime=60;";
+                    SqlConnectionStringBuilder sb_mssql = new SqlConnectionStringBuilder();
+                    // Conexão
+                    sb_mssql.ConnectTimeout = 5;
+                    sb_mssql.DataSource = "localhost,3741";
+                    sb_mssql.UserID = "sa";
+                    sb_mssql.Password = "d120588$788455";
+                    sb_mssql.InitialCatalog = "Teste";
+                    
+                    // Pool
+                    sb_mssql.Pooling = true;
+                    sb_mssql.MinPoolSize = 5;
+                    sb_mssql.MaxPoolSize = 15;
+
+                    strConexao = sb_mssql.ToString();
                     break;
                 case Banco.SqLite:
                     SQLiteConnectionStringBuilder sb_sqlite = new SQLiteConnectionStringBuilder();
@@ -72,7 +85,7 @@ namespace DataGridDataTable
                     sb_sqlite.Password = "";
                     sb_sqlite.Pooling = true;
                     sb_sqlite.Version = 3;
-
+                    
                     strConexao = sb_sqlite.ToString();
                     break;
                 default:
@@ -212,23 +225,23 @@ namespace DataGridDataTable
             return dt;
         }
 
-        //static string BancoDeDados(IDbConnection con, bool ponto = true)
-        //{
-        //    string bd = "";
-        //    switch (Banco)
-        //    {
-        //        case Banco.MySql:
-        //        case Banco.SqLite:
-        //            bd = PalavraBanco(con.Database) + (ponto ? "." : "");
-        //            break;
-        //        case Banco.MsSql:
-        //            bd = PalavraBanco(con.Database) + (ponto ? ".." : "");
-        //            break;
-        //        default:
-        //            throw new NotImplementedException(nameof(Banco));
-        //    }
-        //    return bd;
-        //}
+        static string BancoDeDados(IDbConnection con, bool ponto = true)
+        {
+            string bd;
+            switch (Banco)
+            {
+                case Banco.MySql:
+                case Banco.SqLite:
+                    bd = PalavraBanco(con.Database) + (ponto ? "." : "");
+                    break;
+                case Banco.MsSql:
+                    bd = PalavraBanco(con.Database) + (ponto ? ".." : "");
+                    break;
+                default:
+                    throw new NotImplementedException(nameof(Banco));
+            }
+            return bd;
+        }
 
         /// <summary>
         /// Previne erros de comando sql quando uma palavra entra em conflito com alguma palavra-chave do banco de dados.
@@ -352,7 +365,7 @@ namespace DataGridDataTable
                         string values = "", reg = "";
                         for (int r = 0, lote = 1; r < add.Rows.Count; r++, lote++)
                         {
-                            #region Monta valores da row atual
+                            // Monta valores da row atual
                             if (UsarValoresPadrao)
                             {
                                 DataColumn[] tmp_cols = SelecionarColunas(add, r, true);
@@ -370,30 +383,27 @@ namespace DataGridDataTable
                                     insertinto = $"INSERT INTO {PalavraBanco(dt.TableName)}({sColunas})VALUES";
                                 }
                             }
-
                             reg += string.Join(",", sel_cols.Select(col => $"{ValorBanco(add.Rows[r][add.Columns.IndexOf(col)])}"));
-                            #endregion
 
-                            #region Monta lista de Values
+                            // Monta lista de Values
                             if (values != "") values += ",";
                             values += "(" + reg + ")";
                             reg = "";
-                            #endregion
 
-                            #region Gravação
                             if (lote == quantLote ||
                                 r == add.Rows.Count - 1 /* Último Row? */)
                             {
                                 if (values != "")
                                 {
                                     sb.AppendLine(insertinto + values + ";");
+                                    values = "";
                                 }
 
                                 com.CommandText = sb.ToString();
                                 afetados_add += com.ExecuteNonQuery();
                                 lote = 0;
+                                sb.Clear();
                             }
-                            #endregion
                         }
                     }
                     if (del != null)
@@ -411,6 +421,7 @@ namespace DataGridDataTable
                                     com.CommandText = $"DELETE FROM {PalavraBanco(dt.TableName)} WHERE {PalavraBanco(id.ColumnName)} IN ({sb.ToString()})" ;
                                     afetados_del += com.ExecuteNonQuery();
                                     lote = 0;
+                                    sb.Clear();
                                 }
                             }
                         }
@@ -449,6 +460,7 @@ namespace DataGridDataTable
                                     com.CommandText = sb.ToString();
                                     afetados_del += com.ExecuteNonQuery();
                                     lote = 0;
+                                    sb.Clear();
                                 }
                             }
                         }
@@ -492,6 +504,7 @@ namespace DataGridDataTable
                                 com.CommandText = sb.ToString();
                                 afetados_alt += com.ExecuteNonQuery();
                                 lote = 0;
+                                sb.Clear();
                             }
                         }
                     }
@@ -506,7 +519,10 @@ namespace DataGridDataTable
                 dt.RejectChanges();
             }
 
-            return afetados_add + afetados_del + afetados_alt;
+            return 
+                afetados_add + 
+                afetados_del + 
+                afetados_alt;
         }
 
         /// <summary>
