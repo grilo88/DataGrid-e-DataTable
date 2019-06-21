@@ -25,21 +25,21 @@ namespace DataGridDataTable
             
         }
 
-        private void BtnCarregar_Click(object sender, EventArgs e)
+        private async void BtnCarregar_Click(object sender, EventArgs e)
         {
             if (vdg.DataSource == null)
             {
                 vdg.DataSource = new DataTable("Tabela");
             }
 
-            vdg.DataSource = DAL.Carregar(vdg.DataSource);
+            vdg.DataSource = await DAL.Carregar(vdg.DataSource);
         }
 
-        private void BtnRecarregar_Click(object sender, EventArgs e)
+        private async void BtnRecarregar_Click(object sender, EventArgs e)
         {
             vdg.DataSource = null;
             vdg.DataSource = new DataTable("Tabela");
-            vdg.DataSource = DAL.Carregar(vdg.DataSource);
+            vdg.DataSource = await DAL.Carregar(vdg.DataSource);
         }
     }
 }

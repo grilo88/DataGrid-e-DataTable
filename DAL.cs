@@ -151,21 +151,24 @@ namespace DataGridDataTable
             return schema;
         }
 
-        public static DataTable Carregar(DataTable dt) => Carregar(dt, null, -1);
-        public static DataTable Carregar(DataTable dt, int limite) => Carregar(dt, null, limite);
+        public static async Task<DataTable> Carregar(DataTable dt) => await Carregar(dt, null, -1);
+        public static async Task<DataTable> Carregar(DataTable dt, int limite) => await Carregar(dt, null, limite);
 
-        public static DataTable Carregar(DataTable dt, string[] colunas, int limite)
+        public static async Task<DataTable> Carregar(DataTable dt, string[] colunas, int limite)
         {
             if (dt == null) throw new Exception("Instancie o DataTable");
             if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
             if (dt.PrimaryKey.Length == 0 && dt.Rows.Count > 0) throw new Exception("É necessário possuir uma coluna chave primária com auto-incremento no DataTable para realizar a união (atualização) dos registros neste recarregamento de dados. Obtenha o modelo através do método estático DAL.Carregar() sobre a definição de chave-primária.");
+
+            frmProcessando.TelaProcessando();
+            frmProcessando.TextoLegenda = $"Carregando tabela '{dt.TableName}'";
 
             try
             {
                 using (IDbConnection con = CrossConnection(strConexao))
                 using (IDbCommand com = CrossCommand(con))
                 {
-                    con.Open();
+                    await OpenAsync(con);
 
                     string select = "SELECT ";
                     string cols = colunas == null || colunas.Length == 0 ? "*" : string.Join(",", colunas.Select(col => PalavraBanco(col)));
@@ -219,7 +222,12 @@ namespace DataGridDataTable
             }
             catch (Exception ex)
             {
+                frmProcessando.Processando = false;
                 MessageBox.Show(ex.Message, "Erro");
+            }
+            finally
+            {
+                frmProcessando.Processando = false;
             }
 
             return dt;
@@ -316,6 +324,9 @@ namespace DataGridDataTable
 
             try
             {
+                frmProcessando.TelaProcessando();
+                frmProcessando.TextoLegenda = "Preparando para aplicar alterações...";
+
                 DataTable add = dt.GetChanges(DataRowState.Added);
                 DataTable del = dt.GetChanges(DataRowState.Deleted);
                 DataTable alt = dt.GetChanges(DataRowState.Modified);
@@ -347,6 +358,8 @@ namespace DataGridDataTable
 
                     if (add != null)
                     {
+                        frmProcessando.TextoLegenda = "Inserindo registros...";
+
                         sb.Clear();
                         string insertinto = ""; 
 
@@ -408,6 +421,8 @@ namespace DataGridDataTable
                     }
                     if (del != null)
                     {
+                        frmProcessando.TextoLegenda = "Deletando registros...";
+
                         sb.Clear();
                         if (UsarDeleteWhereIn)
                         {
@@ -467,6 +482,8 @@ namespace DataGridDataTable
                     }
                     if (alt != null)
                     {
+                        frmProcessando.TextoLegenda = "Alterando registros...";
+
                         sb.Clear();
                         for (int r = 0, lote = 1; r < alt.Rows.Count; r++, lote++)
                         {
@@ -515,8 +532,13 @@ namespace DataGridDataTable
             }
             catch (Exception ex)
             {
+                frmProcessando.Processando = false;
                 MessageBox.Show(ex.Message, "Erro");
                 dt.RejectChanges();
+            }
+            finally
+            {
+                frmProcessando.Processando = false;
             }
 
             return 
@@ -568,6 +590,38 @@ namespace DataGridDataTable
             }
 
             return sel_cols.ToArray();
+        }
+
+        public static DataTable GerarRows(DataTable dt, int linhas, params string[] cols)
+        {
+            frmProcessando.TelaProcessando();
+            frmProcessando.TextoLegenda = "Gerando rows.";
+
+            DataColumn[] sel = new DataColumn[cols.Length];
+            for (int c = 0; c < cols.Length; c++)
+            {
+                sel[c] = dt.Columns.Cast<DataColumn>().Where(x => x.ColumnName == cols[c]).FirstOrDefault();
+            }
+
+            for (int i = 0; i < linhas; i++)
+            {
+                DataRow newRow = dt.NewRow();
+                for (int c = 0; c < sel.Length; c++)
+                {
+                    if (sel[c].DataType == typeof(string))
+                    {
+                        newRow[sel[c]] = "Testando123";
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                dt.Rows.Add(newRow);
+            }
+
+            frmProcessando.Processando = false;
+            return dt;
         }
     }
 }

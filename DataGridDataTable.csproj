@@ -60,6 +60,12 @@
     <Compile Include="frmPrincipal.Designer.cs">
       <DependentUpon>frmPrincipal.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmProcessando.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmProcessando.designer.cs">
+      <DependentUpon>frmProcessando.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="frmVirtualDataGrid.cs">
@@ -71,6 +77,9 @@
     <Compile Include="FastDataGrid.cs" />
     <EmbeddedResource Include="frmPrincipal.resx">
       <DependentUpon>frmPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmProcessando.resx">
+      <DependentUpon>frmProcessando.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

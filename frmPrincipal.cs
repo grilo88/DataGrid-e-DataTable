@@ -22,18 +22,24 @@ namespace DataGridDataTable
             BtnCarregar_Click(sender, e);
         }
 
-        private void BtnCarregar_Click(object sender, EventArgs e)
+        private async void BtnCarregar_Click(object sender, EventArgs e)
         {
             if (dg.DataSource == null)
             {
                 dg.DataSource = new DataTable("Tabela");
             }
 
-            dg.DataSource = DAL.Carregar((DataTable)dg.DataSource);
+            dg.DataSource = await DAL.Carregar((DataTable)dg.DataSource);
         }
 
         private async void BtnAplicar_Click(object sender, EventArgs e)
         {
+            if (((DataTable)dg.DataSource).GetChanges() == null)
+            {
+                MessageBox.Show(this, "Não há alterações a serem aplicadas!", "Aplicar");
+                return;
+            }
+
             await DAL.Aplicar((DataTable)dg.DataSource);
         }
 
@@ -60,6 +66,18 @@ namespace DataGridDataTable
         {
             frmVirtualDataGrid frm = new frmVirtualDataGrid();
             frm.ShowDialog();
+        }
+
+        private void BtnGerarRows_Click(object sender, EventArgs e)
+        {
+            dg.DataSource = DAL.GerarRows((DataTable)dg.DataSource, 1000, "col1");
+        }
+
+        private async void BtnRecarregar_Click(object sender, EventArgs e)
+        {
+            dg.DataSource = null;
+            dg.DataSource = new DataTable("Tabela");
+            dg.DataSource = await DAL.Carregar((DataTable)dg.DataSource);
         }
     }
 }

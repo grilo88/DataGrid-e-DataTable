@@ -34,6 +34,8 @@
             this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.virtualDataGridToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.btnRecarregar = new System.Windows.Forms.Button();
+            this.btnGerarRows = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -50,7 +52,7 @@
             // 
             this.btnCarregar.Location = new System.Drawing.Point(39, 397);
             this.btnCarregar.Name = "btnCarregar";
-            this.btnCarregar.Size = new System.Drawing.Size(75, 23);
+            this.btnCarregar.Size = new System.Drawing.Size(116, 23);
             this.btnCarregar.TabIndex = 1;
             this.btnCarregar.Text = "Carregar";
             this.btnCarregar.UseVisualStyleBackColor = true;
@@ -93,11 +95,33 @@
             this.virtualDataGridToolStripMenuItem.Text = "Virtual DataGrid";
             this.virtualDataGridToolStripMenuItem.Click += new System.EventHandler(this.VirtualDataGridToolStripMenuItem_Click);
             // 
+            // btnRecarregar
+            // 
+            this.btnRecarregar.Location = new System.Drawing.Point(161, 397);
+            this.btnRecarregar.Name = "btnRecarregar";
+            this.btnRecarregar.Size = new System.Drawing.Size(116, 23);
+            this.btnRecarregar.TabIndex = 5;
+            this.btnRecarregar.Text = "Recarregar";
+            this.btnRecarregar.UseVisualStyleBackColor = true;
+            this.btnRecarregar.Click += new System.EventHandler(this.BtnRecarregar_Click);
+            // 
+            // btnGerarRows
+            // 
+            this.btnGerarRows.Location = new System.Drawing.Point(584, 12);
+            this.btnGerarRows.Name = "btnGerarRows";
+            this.btnGerarRows.Size = new System.Drawing.Size(107, 23);
+            this.btnGerarRows.TabIndex = 6;
+            this.btnGerarRows.Text = "Gerar Rows";
+            this.btnGerarRows.UseVisualStyleBackColor = true;
+            this.btnGerarRows.Click += new System.EventHandler(this.BtnGerarRows_Click);
+            // 
             // frmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnGerarRows);
+            this.Controls.Add(this.btnRecarregar);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnAplicar);
             this.Controls.Add(this.btnCarregar);
@@ -123,6 +147,8 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem virtualDataGridToolStripMenuItem;
+        private System.Windows.Forms.Button btnRecarregar;
+        private System.Windows.Forms.Button btnGerarRows;
     }
 }
 
