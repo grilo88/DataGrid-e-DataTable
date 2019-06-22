@@ -71,7 +71,7 @@ namespace DataGridDataTable
                     sb_mssql.UserID = "sa";
                     sb_mssql.Password = "d120588$788455";
                     sb_mssql.InitialCatalog = "Teste";
-                    
+
                     // Pool
                     sb_mssql.Pooling = true;
                     sb_mssql.MinPoolSize = 5;
@@ -85,7 +85,7 @@ namespace DataGridDataTable
                     sb_sqlite.Password = "";
                     sb_sqlite.Pooling = true;
                     sb_sqlite.Version = 3;
-                    
+
                     strConexao = sb_sqlite.ToString();
                     break;
                 default:
@@ -197,7 +197,7 @@ namespace DataGridDataTable
                         // durante o union do recarregamento dos dados
                         for (int i = 0; i < dt.PrimaryKey.Length; i++)
                         {
-                            dt.PrimaryKey[i].ReadOnly = false; 
+                            dt.PrimaryKey[i].ReadOnly = false;
                         }
                     } // Se por acaso ocorrer também com outros bancos, este if deve ser removido. Não o conteúdo do if.
 
@@ -361,7 +361,7 @@ namespace DataGridDataTable
                         frmProcessando.TextoLegenda = "Inserindo registros...";
 
                         sb.Clear();
-                        string insertinto = ""; 
+                        string insertinto = "";
 
                         DataColumn[] sel_cols = null;
                         if (!UsarValoresPadrao)
@@ -429,11 +429,11 @@ namespace DataGridDataTable
                             for (int r = 0, lote = 1; r < del.Rows.Count; r++, lote++)
                             {
                                 object id_val = del.Rows[r][idx_id, DataRowVersion.Original];
-                                sb.Append((sb.Length > 0 ? ",": "") + ValorBanco(id_val));
+                                sb.Append((sb.Length > 0 ? "," : "") + ValorBanco(id_val));
 
                                 if (lote == quantLote || r == del.Rows.Count - 1)
                                 {
-                                    com.CommandText = $"DELETE FROM {PalavraBanco(dt.TableName)} WHERE {PalavraBanco(id.ColumnName)} IN ({sb.ToString()})" ;
+                                    com.CommandText = $"DELETE FROM {PalavraBanco(dt.TableName)} WHERE {PalavraBanco(id.ColumnName)} IN ({sb.ToString()})";
                                     afetados_del += com.ExecuteNonQuery();
                                     lote = 0;
                                     sb.Clear();
@@ -541,9 +541,9 @@ namespace DataGridDataTable
                 frmProcessando.Processando = false;
             }
 
-            return 
-                afetados_add + 
-                afetados_del + 
+            return
+                afetados_add +
+                afetados_del +
                 afetados_alt;
         }
 
@@ -590,6 +590,62 @@ namespace DataGridDataTable
             }
 
             return sel_cols.ToArray();
+        }
+
+        public static object Pesquisar(DataTable dt, string texto, params DataColumn[] colunas)
+        {
+            bool isNumero = long.TryParse(texto, out _);
+
+            if (texto != "")
+            {
+                DataView view = dt.AsDataView();
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < colunas.Length; i++)
+                {
+                    if (sb.Length > 0) sb.Append(" OR ");
+                    if (colunas[i].DataType == typeof(string))
+                    {
+                        sb.Append($"[{colunas[i].ColumnName}]LIKE '%{texto}%'");
+                    }
+                    else if (isNumero &&
+                        (colunas[i].DataType == typeof(int) ||
+                        colunas[i].DataType == typeof(long) ||
+                        colunas[i].DataType == typeof(short) ||
+                        colunas[i].DataType == typeof(byte) ||
+                        colunas[i].DataType == typeof(sbyte)))
+                    {
+                        sb.Append($"[{colunas[i].ColumnName}]='{texto}'");
+                    }
+                    else
+                    {
+                        sb.Append("1=0");
+                    }
+                }
+
+                view.RowFilter = sb.ToString();
+                return view;
+            }
+            else
+            {
+                return dt;
+            }
+        }
+
+        public static DataTable ObterDataTable(object datasource)
+        {
+            DataTable dt;
+            if (datasource is DataView)
+            {
+                dt = ((DataView)datasource).Table;
+            }
+            else if (datasource is DataTable)
+            {
+                dt = (DataTable)datasource;
+            }
+            else
+                throw new NotImplementedException(datasource.GetType().Name);
+
+            return dt;
         }
 
         public static DataTable GerarRows(DataTable dt, int linhas, params string[] cols)

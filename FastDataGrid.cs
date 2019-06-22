@@ -21,7 +21,7 @@ namespace DataGridDataTable
             dg = dataGridView;
             dg.VirtualMode = true;
             dg.AllowUserToAddRows = true;
-
+            
             dg.NewRowNeeded += Dg_NewRowNeeded;
             dg.CellValueNeeded += Dg_CellValueNeeded;
             dg.CellValuePushed += Dg_CellValuePushed;

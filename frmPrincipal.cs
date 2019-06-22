@@ -29,30 +29,30 @@ namespace DataGridDataTable
                 dg.DataSource = new DataTable("Tabela");
             }
 
-            dg.DataSource = await DAL.Carregar((DataTable)dg.DataSource);
+            dg.DataSource = await DAL.Carregar(DAL.ObterDataTable(dg.DataSource));
         }
 
         private async void BtnAplicar_Click(object sender, EventArgs e)
         {
-            if (((DataTable)dg.DataSource).GetChanges() == null)
+            if (DAL.ObterDataTable(dg.DataSource).GetChanges() == null)
             {
                 MessageBox.Show(this, "Não há alterações a serem aplicadas!", "Aplicar");
                 return;
             }
 
-            await DAL.Aplicar((DataTable)dg.DataSource);
+            await DAL.Aplicar(DAL.ObterDataTable(dg.DataSource));
         }
 
         private void Button1_Click(object sender, EventArgs e)
         {
             int tick = Environment.TickCount;
-            DataTable alt = ((DataTable)dg.DataSource);
+            DataTable alt = DAL.ObterDataTable(dg.DataSource);
 
             Task<int>[] tarefas = new Task<int>[100];
 
             for (int i = 0; i < tarefas.Length; i++)
             {
-                tarefas[i] = DAL.Aplicar((DataTable)dg.DataSource);
+                tarefas[i] = DAL.Aplicar(DAL.ObterDataTable(dg.DataSource));
             }
 
             Task.WaitAll(tarefas);
@@ -70,14 +70,20 @@ namespace DataGridDataTable
 
         private void BtnGerarRows_Click(object sender, EventArgs e)
         {
-            dg.DataSource = DAL.GerarRows((DataTable)dg.DataSource, 1000, "col1");
+            dg.DataSource = DAL.GerarRows(DAL.ObterDataTable(dg.DataSource), 1000, "col1");
         }
 
         private async void BtnRecarregar_Click(object sender, EventArgs e)
         {
             dg.DataSource = null;
             dg.DataSource = new DataTable("Tabela");
-            dg.DataSource = await DAL.Carregar((DataTable)dg.DataSource);
+            dg.DataSource = await DAL.Carregar(DAL.ObterDataTable(dg.DataSource));
+        }
+
+        private void TxtPesquisar_TextChanged(object sender, EventArgs e)
+        {
+            DataTable dt = DAL.ObterDataTable(dg.DataSource);
+            dg.DataSource = DAL.Pesquisar(dt, txtPesquisar.Text, dt.Columns[0], dt.Columns[1]);
         }
     }
 }

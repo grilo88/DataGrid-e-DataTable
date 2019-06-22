@@ -36,6 +36,8 @@
             this.virtualDataGridToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnRecarregar = new System.Windows.Forms.Button();
             this.btnGerarRows = new System.Windows.Forms.Button();
+            this.txtPesquisar = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -43,9 +45,9 @@
             // dg
             // 
             this.dg.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dg.Location = new System.Drawing.Point(39, 77);
+            this.dg.Location = new System.Drawing.Point(39, 119);
             this.dg.Name = "dg";
-            this.dg.Size = new System.Drawing.Size(652, 314);
+            this.dg.Size = new System.Drawing.Size(652, 272);
             this.dg.TabIndex = 0;
             // 
             // btnCarregar
@@ -115,11 +117,30 @@
             this.btnGerarRows.UseVisualStyleBackColor = true;
             this.btnGerarRows.Click += new System.EventHandler(this.BtnGerarRows_Click);
             // 
+            // txtPesquisar
+            // 
+            this.txtPesquisar.Location = new System.Drawing.Point(104, 81);
+            this.txtPesquisar.Name = "txtPesquisar";
+            this.txtPesquisar.Size = new System.Drawing.Size(255, 20);
+            this.txtPesquisar.TabIndex = 7;
+            this.txtPesquisar.TextChanged += new System.EventHandler(this.TxtPesquisar_TextChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(36, 81);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(53, 13);
+            this.label1.TabIndex = 8;
+            this.label1.Text = "Pesquisar";
+            // 
             // frmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtPesquisar);
             this.Controls.Add(this.btnGerarRows);
             this.Controls.Add(this.btnRecarregar);
             this.Controls.Add(this.button1);
@@ -149,6 +170,8 @@
         private System.Windows.Forms.ToolStripMenuItem virtualDataGridToolStripMenuItem;
         private System.Windows.Forms.Button btnRecarregar;
         private System.Windows.Forms.Button btnGerarRows;
+        private System.Windows.Forms.TextBox txtPesquisar;
+        private System.Windows.Forms.Label label1;
     }
 }
 
