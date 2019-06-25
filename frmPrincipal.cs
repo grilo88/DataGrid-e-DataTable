@@ -12,13 +12,24 @@ namespace DataGridDataTable
 {
     public partial class frmPrincipal : Form
     {
+        DAL dal;
         public frmPrincipal()
         {
             InitializeComponent();
         }
 
+        private void Dal_ResultadoPesquisa(object sender, PesquisaEventArgs e)
+        {
+            dg.DataSource = e.Resultado;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
+            dal = new DAL(this);
+            dal.ResultadoPesquisa += Dal_ResultadoPesquisa;
+
+            cboCondicaoPesquisa.DataSource = Enum.GetValues(typeof(CondicaoPesquisa));
+            cboCondicaoPesquisa.SelectedIndex = 5;
             BtnCarregar_Click(sender, e);
         }
 
@@ -29,7 +40,7 @@ namespace DataGridDataTable
                 dg.DataSource = new DataTable("Tabela");
             }
 
-            dg.DataSource = await DAL.Carregar(DAL.ObterDataTable(dg.DataSource));
+            dg.DataSource = await dal.Carregar(DAL.ObterDataTable(dg.DataSource));
         }
 
         private async void BtnAplicar_Click(object sender, EventArgs e)
@@ -40,7 +51,7 @@ namespace DataGridDataTable
                 return;
             }
 
-            await DAL.Aplicar(DAL.ObterDataTable(dg.DataSource));
+            await dal.Aplicar(DAL.ObterDataTable(dg.DataSource));
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -52,7 +63,7 @@ namespace DataGridDataTable
 
             for (int i = 0; i < tarefas.Length; i++)
             {
-                tarefas[i] = DAL.Aplicar(DAL.ObterDataTable(dg.DataSource));
+                tarefas[i] = dal.Aplicar(DAL.ObterDataTable(dg.DataSource));
             }
 
             Task.WaitAll(tarefas);
@@ -70,20 +81,50 @@ namespace DataGridDataTable
 
         private void BtnGerarRows_Click(object sender, EventArgs e)
         {
-            dg.DataSource = DAL.GerarRows(DAL.ObterDataTable(dg.DataSource), 1000, "col1");
+            dg.DataSource = DAL.GerarRows(dg, 50000, "col1");
         }
 
         private async void BtnRecarregar_Click(object sender, EventArgs e)
         {
             dg.DataSource = null;
             dg.DataSource = new DataTable("Tabela");
-            dg.DataSource = await DAL.Carregar(DAL.ObterDataTable(dg.DataSource));
+            dg.DataSource = await dal.Carregar(DAL.ObterDataTable(dg.DataSource));
         }
 
         private void TxtPesquisar_TextChanged(object sender, EventArgs e)
         {
             DataTable dt = DAL.ObterDataTable(dg.DataSource);
-            dg.DataSource = DAL.Pesquisar(dt, txtPesquisar.Text, dt.Columns[0], dt.Columns[1]);
+
+            dal.Pesquisar(
+                dt, txtPesquisar.Text,
+                chkDiferenteDe.Checked,
+                (CondicaoPesquisa)cboCondicaoPesquisa.SelectedValue, 
+                dt.Columns[0], dt.Columns[1], dt.Columns[2]);
+        }
+
+        private void CboCondicaoPesquisa_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (dg.DataSource != null) TxtPesquisar_TextChanged(sender, e);
+        }
+
+        private void ChkDiferenteDe_CheckedChanged(object sender, EventArgs e)
+        {
+            if (dg.DataSource != null) TxtPesquisar_TextChanged(sender, e);
+        }
+
+        private void FrmPrincipal_Activated(object sender, EventArgs e)
+        {
+        }
+
+        private void BtnCancelar_Click(object sender, EventArgs e)
+        {
+            if (dg.DataSource != null)
+            {
+                DataTable dt = DAL.ObterDataTable(dg.DataSource);
+                dg.DataSource = null;
+                dt.RejectChanges();
+                dg.DataSource = dt;
+            }
         }
     }
 }

@@ -11,7 +11,6 @@ using System.Windows.Forms;
 
 namespace DataGridDataTable
 {
-
     public enum Banco
     {
         MySql = 1,
@@ -19,9 +18,22 @@ namespace DataGridDataTable
         SqLite = 3
     }
 
-    public static class DAL
+    public enum CondicaoPesquisa
     {
-        public static Banco Banco { get; private set; } = Banco.SqLite;
+        IgualA,
+        MaiorQue,
+        MaiorOuIgualA,
+        MenorQue,
+        MenorOuIgualA,
+        Contém,
+        IniciaCom,
+        TerminaCom,
+        Palavra,
+    }
+
+    public class DAL
+    {
+        public Banco Banco { get; private set; } = Banco.SqLite;
         static string strConexao { get; set; }
 
         /// <summary>
@@ -29,16 +41,18 @@ namespace DataGridDataTable
         /// do banco de dados melhorando a performance do sistema. No caso do insert, campos preenchidos. 
         /// No caso do update, campos alterados.
         /// </summary>
-        public static bool UsarValoresPadrao { get; set; } = true;
+        public bool UsarValoresPadrao { get; set; } = true;
 
         /// <summary>
         /// Simplifica o comando Delete reduzindo significamente o consumo de tráfego na conexão
         /// </summary>
-        public static bool UsarDeleteWhereIn { get; set; } = true;
+        public bool UsarDeleteWhereIn { get; set; } = true;
+        readonly Form owner = null;
 
-        // Construtor Estático
-        static DAL()
+        public DAL() : this(null) { }
+        public DAL(Form owner)
         {
+            this.owner = owner;
             switch (Banco)
             {
                 case Banco.MySql:
@@ -93,7 +107,7 @@ namespace DataGridDataTable
             }
         }
 
-        public static Task OpenAsync(IDbConnection con)
+        public Task OpenAsync(IDbConnection con)
         {
             switch (Banco)
             {
@@ -108,7 +122,7 @@ namespace DataGridDataTable
             }
         }
 
-        public static IDbConnection CrossConnection(string conexao)
+        public IDbConnection CrossConnection(string conexao)
         {
             switch (Banco)
             {
@@ -123,7 +137,7 @@ namespace DataGridDataTable
             }
         }
 
-        public static IDbCommand CrossCommand(IDbConnection con)
+        public IDbCommand CrossCommand(IDbConnection con)
         {
             switch (Banco)
             {
@@ -138,7 +152,7 @@ namespace DataGridDataTable
             }
         }
 
-        public static DataTable Schema(IDbCommand com)
+        public DataTable Schema(IDbCommand com)
         {
             if (com.CommandText == "")
                 throw new Exception("Deve ser chamado após CommandText for preenchido.");
@@ -151,16 +165,16 @@ namespace DataGridDataTable
             return schema;
         }
 
-        public static async Task<DataTable> Carregar(DataTable dt) => await Carregar(dt, null, -1);
-        public static async Task<DataTable> Carregar(DataTable dt, int limite) => await Carregar(dt, null, limite);
+        public async Task<DataTable> Carregar(DataTable dt) => await Carregar(dt, null, -1);
+        public async Task<DataTable> Carregar(DataTable dt, int limite) => await Carregar(dt, null, limite);
 
-        public static async Task<DataTable> Carregar(DataTable dt, string[] colunas, int limite)
+        public async Task<DataTable> Carregar(DataTable dt, string[] colunas, int limite)
         {
             if (dt == null) throw new Exception("Instancie o DataTable");
             if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
             if (dt.PrimaryKey.Length == 0 && dt.Rows.Count > 0) throw new Exception("É necessário possuir uma coluna chave primária com auto-incremento no DataTable para realizar a união (atualização) dos registros neste recarregamento de dados. Obtenha o modelo através do método estático DAL.Carregar() sobre a definição de chave-primária.");
 
-            frmProcessando.TelaProcessando();
+            frmProcessando.TelaProcessando(owner);
             frmProcessando.TextoLegenda = $"Carregando tabela '{dt.TableName}'";
 
             try
@@ -233,7 +247,7 @@ namespace DataGridDataTable
             return dt;
         }
 
-        static string BancoDeDados(IDbConnection con, bool ponto = true)
+        string BancoDeDados(IDbConnection con, bool ponto = true)
         {
             string bd;
             switch (Banco)
@@ -256,7 +270,7 @@ namespace DataGridDataTable
         /// </summary>
         /// <param name="palavra"></param>
         /// <returns></returns>
-        static string PalavraBanco(string palavra)
+        string PalavraBanco(string palavra)
         {
             switch (Banco)
             {
@@ -278,7 +292,7 @@ namespace DataGridDataTable
         /// </summary>
         /// <param name="valor"></param>
         /// <returns></returns>
-        static object ValorBanco(object valor)
+        object ValorBanco(object valor)
         {
             switch (Banco)
             {
@@ -313,7 +327,7 @@ namespace DataGridDataTable
         /// </summary>
         /// <param name="dt"></param>
         /// <returns></returns>
-        public static async Task<int> Aplicar(DataTable dt)
+        public async Task<int> Aplicar(DataTable dt)
         {
             StringBuilder sb = new StringBuilder();
             int quantLote = 150;
@@ -324,7 +338,7 @@ namespace DataGridDataTable
 
             try
             {
-                frmProcessando.TelaProcessando();
+                frmProcessando.TelaProcessando(owner);
                 frmProcessando.TextoLegenda = "Preparando para aplicar alterações...";
 
                 DataTable add = dt.GetChanges(DataRowState.Added);
@@ -592,9 +606,24 @@ namespace DataGridDataTable
             return sel_cols.ToArray();
         }
 
-        public static object Pesquisar(DataTable dt, string texto, params DataColumn[] colunas)
+        Timer tmrPesquisa = new Timer();
+        public void Pesquisar(DataTable dt, string texto, bool diferenteDe, CondicaoPesquisa condicao, params DataColumn[] colunas)
         {
-            bool isNumero = long.TryParse(texto, out _);
+            tmrPesquisa.Stop();
+            tmrPesquisa.Interval = 500; // Aciona o evento após X milisegundos
+            tmrPesquisa.Tick += (sender, _e) =>
+            {
+                tmrPesquisa.Stop();
+                OnPesquisa(new PesquisaEventArgs(PesquisarInterno(dt, texto, diferenteDe, condicao, colunas)));
+            };
+            tmrPesquisa.Start();
+        }
+
+        private object PesquisarInterno(
+            DataTable dt, string texto,
+            bool diferenteDe, CondicaoPesquisa condicao, params DataColumn[] colunas)
+        {
+            bool isNumero = long.TryParse(texto, out long numero);
 
             if (texto != "")
             {
@@ -602,10 +631,36 @@ namespace DataGridDataTable
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < colunas.Length; i++)
                 {
-                    if (sb.Length > 0) sb.Append(" OR ");
                     if (colunas[i].DataType == typeof(string))
                     {
-                        sb.Append($"[{colunas[i].ColumnName}]LIKE '%{texto}%'");
+                        string filtro;
+                        switch (condicao)
+                        {
+                            case CondicaoPesquisa.IgualA:
+                                filtro = $"[{colunas[i].ColumnName}]='{texto}'";
+                                break;
+                            case CondicaoPesquisa.Contém:
+                                filtro = $"[{colunas[i].ColumnName}]LIKE '%{texto}%'";
+                                break;
+                            case CondicaoPesquisa.IniciaCom:
+                                filtro = $"[{colunas[i].ColumnName}]LIKE '{texto}%'";
+                                break;
+                            case CondicaoPesquisa.TerminaCom:
+                                filtro = $"[{colunas[i].ColumnName}]LIKE '%{texto}'";
+                                break;
+                            case CondicaoPesquisa.Palavra:
+                                filtro = "(" +
+                                    $"[{colunas[i].ColumnName}]='{texto}' OR" +
+                                    $"[{colunas[i].ColumnName}]LIKE '{texto} %' OR" +
+                                    $"[{colunas[i].ColumnName}]LIKE '% {texto} %' OR" +
+                                    $"[{colunas[i].ColumnName}]LIKE '% {texto}'" +
+                                    ")";
+                                break;
+                            default: continue;
+                        }
+
+                        if (sb.Length > 0) sb.Append(" OR ");
+                        sb.Append(filtro);
                     }
                     else if (isNumero &&
                         (colunas[i].DataType == typeof(int) ||
@@ -614,15 +669,34 @@ namespace DataGridDataTable
                         colunas[i].DataType == typeof(byte) ||
                         colunas[i].DataType == typeof(sbyte)))
                     {
-                        sb.Append($"[{colunas[i].ColumnName}]='{texto}'");
-                    }
-                    else
-                    {
-                        sb.Append("1=0");
+                        string filtro;
+                        switch (condicao)
+                        {
+                            case CondicaoPesquisa.IgualA:
+                            case CondicaoPesquisa.Contém:
+                                filtro = $"[{colunas[i].ColumnName}]={numero}";
+                                break;
+                            case CondicaoPesquisa.MaiorQue:
+                                filtro = $"[{colunas[i].ColumnName}]>{numero}";
+                                break;
+                            case CondicaoPesquisa.MaiorOuIgualA:
+                                filtro = $"[{colunas[i].ColumnName}]>={numero}";
+                                break;
+                            case CondicaoPesquisa.MenorQue:
+                                filtro = $"[{colunas[i].ColumnName}]<{numero}";
+                                break;
+                            case CondicaoPesquisa.MenorOuIgualA:
+                                filtro = $"[{colunas[i].ColumnName}]<={numero}";
+                                break;
+                            default: continue;
+                        }
+
+                        if (sb.Length > 0) sb.Append(" OR ");
+                        sb.Append(filtro);
                     }
                 }
 
-                view.RowFilter = sb.ToString();
+                view.RowFilter = diferenteDe ? $"NOT({sb.ToString()})" : sb.ToString();
                 return view;
             }
             else
@@ -630,6 +704,17 @@ namespace DataGridDataTable
                 return dt;
             }
         }
+
+        protected virtual void OnPesquisa(PesquisaEventArgs e)
+        {
+            ResultadoPesquisaHandler handler = ResultadoPesquisa;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        
 
         public static DataTable ObterDataTable(object datasource)
         {
@@ -648,10 +733,13 @@ namespace DataGridDataTable
             return dt;
         }
 
-        public static DataTable GerarRows(DataTable dt, int linhas, params string[] cols)
+        public static DataTable GerarRows(DataGridView dg, int linhas, params string[] cols)
         {
-            frmProcessando.TelaProcessando();
-            frmProcessando.TextoLegenda = "Gerando rows.";
+            frmProcessando.TelaProcessando(null);
+            frmProcessando.TextoLegenda = $"Gerando {linhas} registros.";
+
+            DataTable dt = ObterDataTable(dg.DataSource);
+            dg.DataSource = null; // Carregamento rápido
 
             DataColumn[] sel = new DataColumn[cols.Length];
             for (int c = 0; c < cols.Length; c++)
@@ -670,7 +758,7 @@ namespace DataGridDataTable
                     }
                     else
                     {
-                        throw new NotImplementedException();
+                        throw new NotImplementedException(sel[c].DataType.Name);
                     }
                 }
                 dt.Rows.Add(newRow);
@@ -679,5 +767,18 @@ namespace DataGridDataTable
             frmProcessando.Processando = false;
             return dt;
         }
+
+        public event ResultadoPesquisaHandler ResultadoPesquisa;
     }
+
+    public class PesquisaEventArgs : EventArgs
+    {
+        public object Resultado;
+        public PesquisaEventArgs(object resultado)
+        {
+            this.Resultado = resultado;
+        }
+    }
+
+    public delegate void ResultadoPesquisaHandler(object sender, PesquisaEventArgs e);
 }

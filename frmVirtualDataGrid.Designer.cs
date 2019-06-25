@@ -83,7 +83,6 @@
             this.Controls.Add(this.dg);
             this.Name = "frmVirtualDataGrid";
             this.Text = "VirtualDataGrid";
-            this.Load += new System.EventHandler(this.FrmVirtualDataGrid_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dg)).EndInit();
             this.ResumeLayout(false);
 

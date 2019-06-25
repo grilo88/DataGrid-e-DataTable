@@ -12,17 +12,14 @@ namespace DataGridDataTable
 {
     public partial class frmVirtualDataGrid : Form
     {
+        DAL dal;
         FastDataGrid vdg;
 
         public frmVirtualDataGrid()
         {
             InitializeComponent();
             vdg = new FastDataGrid(dg);
-        }
-
-        private void FrmVirtualDataGrid_Load(object sender, EventArgs e)
-        {
-            
+            dal = new DAL(this);
         }
 
         private async void BtnCarregar_Click(object sender, EventArgs e)
@@ -32,14 +29,14 @@ namespace DataGridDataTable
                 vdg.DataSource = new DataTable("Tabela");
             }
 
-            vdg.DataSource = await DAL.Carregar(vdg.DataSource);
+            vdg.DataSource = await dal.Carregar(vdg.DataSource);
         }
 
         private async void BtnRecarregar_Click(object sender, EventArgs e)
         {
             vdg.DataSource = null;
             vdg.DataSource = new DataTable("Tabela");
-            vdg.DataSource = await DAL.Carregar(vdg.DataSource);
+            vdg.DataSource = await dal.Carregar(vdg.DataSource);
         }
     }
 }

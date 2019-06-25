@@ -11,7 +11,7 @@ namespace DataGridDataTable
         /// <summary>
         /// Ponto de entrada principal para o aplicativo.
         /// </summary>
-        [STAThread]
+        [MTAThread]
         static void Main()
         {
             Application.EnableVisualStyles();

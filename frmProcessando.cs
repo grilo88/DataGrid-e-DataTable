@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -20,16 +21,17 @@ namespace DataGridDataTable
         public static string TextoLegenda { get; set; } = "";
         
         static Task task;
-        public static void TelaProcessando()
+        public static void TelaProcessando(Form owner)
         {
             Processando = true;
             if (task != null && !task.IsCompleted) return; // Encerra se tela de processamento já estiver em execução
 
-            task = new Task(() => 
-            {
+            Thread th = new Thread(() => 
+            { 
                 int tick = Environment.TickCount;
                 using (frmProcessando frm = new frmProcessando())
                 {
+                    //frm.Owner = owner;
                     frm.StartPosition = FormStartPosition.CenterScreen;
                     frm.TopMost = true;
                     frm.ShowInTaskbar = false;
@@ -40,7 +42,7 @@ namespace DataGridDataTable
                         frm.Show(); // Exibe a tela de processamento
 
                     ContinuarTelaProcessamento:
-                        do  
+                        do
                         {
                             if (frm.lblProcessando.Text != TextoProcessando) frm.lblProcessando.Text = TextoProcessando;
                             if (frm.lblLegenda.Text != TextoLegenda) frm.lblLegenda.Text = TextoLegenda;
@@ -51,10 +53,15 @@ namespace DataGridDataTable
                         tick = Environment.TickCount;
                         while (!Processando && Environment.TickCount - tick < FecharMilisegundos) Application.DoEvents(); // Tolera N milésimos antes do fechamento
                         if (Processando) goto ContinuarTelaProcessamento; // Se entrou em um novo processamento, evita o fechamento da tela.
+
+                        if (owner != null)
+                            owner.Invoke(new MethodInvoker(() => owner.Focus()));
                     }
                 }
             });
-            task.Start();
+
+            th.SetApartmentState(ApartmentState.MTA);
+            th.Start();
         }
         #endregion
 
