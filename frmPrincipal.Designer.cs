@@ -43,23 +43,32 @@
             this.chkDiferenteDe = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnCancelar = new System.Windows.Forms.Button();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.pnDg = new System.Windows.Forms.Panel();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.pnDg.SuspendLayout();
             this.SuspendLayout();
             // 
             // dg
             // 
             this.dg.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.dg.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dg.Location = new System.Drawing.Point(39, 119);
+            this.dg.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dg.Location = new System.Drawing.Point(10, 10);
             this.dg.Name = "dg";
-            this.dg.Size = new System.Drawing.Size(652, 272);
+            this.dg.Size = new System.Drawing.Size(632, 252);
             this.dg.TabIndex = 0;
+            this.dg.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.Dg_CellPainting);
+            this.dg.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.Dg_RowPostPaint);
+            this.dg.RowPrePaint += new System.Windows.Forms.DataGridViewRowPrePaintEventHandler(this.Dg_RowPrePaint);
             // 
             // btnCarregar
             // 
-            this.btnCarregar.Location = new System.Drawing.Point(39, 397);
+            this.btnCarregar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnCarregar.Location = new System.Drawing.Point(39, 438);
             this.btnCarregar.Name = "btnCarregar";
             this.btnCarregar.Size = new System.Drawing.Size(116, 23);
             this.btnCarregar.TabIndex = 1;
@@ -69,7 +78,8 @@
             // 
             // btnAplicar
             // 
-            this.btnAplicar.Location = new System.Drawing.Point(584, 397);
+            this.btnAplicar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAplicar.Location = new System.Drawing.Point(584, 438);
             this.btnAplicar.Name = "btnAplicar";
             this.btnAplicar.Size = new System.Drawing.Size(107, 23);
             this.btnAplicar.TabIndex = 2;
@@ -79,7 +89,8 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(453, 12);
+            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button1.Location = new System.Drawing.Point(453, 43);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(107, 23);
             this.button1.TabIndex = 3;
@@ -93,7 +104,7 @@
             this.virtualDataGridToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(800, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(729, 24);
             this.menuStrip1.TabIndex = 4;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -106,7 +117,8 @@
             // 
             // btnRecarregar
             // 
-            this.btnRecarregar.Location = new System.Drawing.Point(161, 397);
+            this.btnRecarregar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnRecarregar.Location = new System.Drawing.Point(161, 438);
             this.btnRecarregar.Name = "btnRecarregar";
             this.btnRecarregar.Size = new System.Drawing.Size(116, 23);
             this.btnRecarregar.TabIndex = 5;
@@ -116,7 +128,8 @@
             // 
             // btnGerarRows
             // 
-            this.btnGerarRows.Location = new System.Drawing.Point(584, 12);
+            this.btnGerarRows.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGerarRows.Location = new System.Drawing.Point(584, 43);
             this.btnGerarRows.Name = "btnGerarRows";
             this.btnGerarRows.Size = new System.Drawing.Size(107, 23);
             this.btnGerarRows.TabIndex = 6;
@@ -126,6 +139,8 @@
             // 
             // txtPesquisar
             // 
+            this.txtPesquisar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPesquisar.Location = new System.Drawing.Point(258, 31);
             this.txtPesquisar.Name = "txtPesquisar";
             this.txtPesquisar.Size = new System.Drawing.Size(374, 20);
@@ -172,12 +187,14 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.chkDiferenteDe);
             this.groupBox1.Controls.Add(this.txtPesquisar);
             this.groupBox1.Controls.Add(this.cboCondicaoPesquisa);
-            this.groupBox1.Location = new System.Drawing.Point(39, 40);
+            this.groupBox1.Location = new System.Drawing.Point(39, 81);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(652, 73);
             this.groupBox1.TabIndex = 12;
@@ -186,7 +203,8 @@
             // 
             // btnCancelar
             // 
-            this.btnCancelar.Location = new System.Drawing.Point(471, 397);
+            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancelar.Location = new System.Drawing.Point(471, 438);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(107, 23);
             this.btnCancelar.TabIndex = 13;
@@ -194,11 +212,43 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.BtnCancelar_Click);
             // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Location = new System.Drawing.Point(0, 490);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(729, 22);
+            this.statusStrip1.TabIndex = 14;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // pnDg
+            // 
+            this.pnDg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnDg.BackColor = System.Drawing.Color.Green;
+            this.pnDg.Controls.Add(this.panel1);
+            this.pnDg.Controls.Add(this.dg);
+            this.pnDg.Location = new System.Drawing.Point(39, 160);
+            this.pnDg.Name = "pnDg";
+            this.pnDg.Padding = new System.Windows.Forms.Padding(10);
+            this.pnDg.Size = new System.Drawing.Size(652, 272);
+            this.pnDg.TabIndex = 15;
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.SpringGreen;
+            this.panel1.Location = new System.Drawing.Point(642, 34);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(9, 20);
+            this.panel1.TabIndex = 1;
+            // 
             // frmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(729, 512);
+            this.Controls.Add(this.pnDg);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnGerarRows);
@@ -206,18 +256,17 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnAplicar);
             this.Controls.Add(this.btnCarregar);
-            this.Controls.Add(this.dg);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "frmPrincipal";
             this.Text = "Form1";
-            this.Activated += new System.EventHandler(this.FrmPrincipal_Activated);
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dg)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.pnDg.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -240,6 +289,9 @@
         private System.Windows.Forms.CheckBox chkDiferenteDe;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnCancelar;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.Panel pnDg;
+        private System.Windows.Forms.Panel panel1;
     }
 }
 

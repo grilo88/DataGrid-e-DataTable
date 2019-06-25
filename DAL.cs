@@ -47,12 +47,9 @@ namespace DataGridDataTable
         /// Simplifica o comando Delete reduzindo significamente o consumo de tráfego na conexão
         /// </summary>
         public bool UsarDeleteWhereIn { get; set; } = true;
-        readonly Form owner = null;
 
-        public DAL() : this(null) { }
-        public DAL(Form owner)
+        public DAL()
         {
-            this.owner = owner;
             switch (Banco)
             {
                 case Banco.MySql:
@@ -167,15 +164,14 @@ namespace DataGridDataTable
 
         public async Task<DataTable> Carregar(DataTable dt) => await Carregar(dt, null, -1);
         public async Task<DataTable> Carregar(DataTable dt, int limite) => await Carregar(dt, null, limite);
-
         public async Task<DataTable> Carregar(DataTable dt, string[] colunas, int limite)
         {
             if (dt == null) throw new Exception("Instancie o DataTable");
             if (dt.TableName == "") throw new Exception("Informe o nome da tabela ao instanciar o DataTable");
             if (dt.PrimaryKey.Length == 0 && dt.Rows.Count > 0) throw new Exception("É necessário possuir uma coluna chave primária com auto-incremento no DataTable para realizar a união (atualização) dos registros neste recarregamento de dados. Obtenha o modelo através do método estático DAL.Carregar() sobre a definição de chave-primária.");
 
-            frmProcessando.TelaProcessando(owner);
-            frmProcessando.TextoLegenda = $"Carregando tabela '{dt.TableName}'";
+            frmProcessando.Exibir();
+            frmProcessando.TextoLegenda = $"Carregando '{dt.TableName}'";
 
             try
             {
@@ -338,7 +334,7 @@ namespace DataGridDataTable
 
             try
             {
-                frmProcessando.TelaProcessando(owner);
+                frmProcessando.Exibir();
                 frmProcessando.TextoLegenda = "Preparando para aplicar alterações...";
 
                 DataTable add = dt.GetChanges(DataRowState.Added);
@@ -555,10 +551,7 @@ namespace DataGridDataTable
                 frmProcessando.Processando = false;
             }
 
-            return
-                afetados_add +
-                afetados_del +
-                afetados_alt;
+            return afetados_add + afetados_del + afetados_alt;
         }
 
         /// <summary>
@@ -606,6 +599,7 @@ namespace DataGridDataTable
             return sel_cols.ToArray();
         }
 
+        #region Sistema de Pesquisa
         Timer tmrPesquisa = new Timer();
         public void Pesquisar(DataTable dt, string texto, bool diferenteDe, CondicaoPesquisa condicao, params DataColumn[] colunas)
         {
@@ -663,6 +657,7 @@ namespace DataGridDataTable
                         sb.Append(filtro);
                     }
                     else if (isNumero &&
+                        // Tipos de dados de colunas suportados
                         (colunas[i].DataType == typeof(int) ||
                         colunas[i].DataType == typeof(long) ||
                         colunas[i].DataType == typeof(short) ||
@@ -713,8 +708,7 @@ namespace DataGridDataTable
                 handler(this, e);
             }
         }
-
-        
+        #endregion
 
         public static DataTable ObterDataTable(object datasource)
         {
@@ -733,9 +727,14 @@ namespace DataGridDataTable
             return dt;
         }
 
+        public static void EstiloDataGrid(DataGridView dg)
+        {
+            
+        }
+
         public static DataTable GerarRows(DataGridView dg, int linhas, params string[] cols)
         {
-            frmProcessando.TelaProcessando(null);
+            frmProcessando.Exibir();
             frmProcessando.TextoLegenda = $"Gerando {linhas} registros.";
 
             DataTable dt = ObterDataTable(dg.DataSource);
@@ -773,10 +772,11 @@ namespace DataGridDataTable
 
     public class PesquisaEventArgs : EventArgs
     {
-        public object Resultado;
+        readonly object _resultado;
+        public object Resultado => _resultado;
         public PesquisaEventArgs(object resultado)
         {
-            this.Resultado = resultado;
+            _resultado = resultado;
         }
     }
 

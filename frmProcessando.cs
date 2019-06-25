@@ -21,13 +21,13 @@ namespace DataGridDataTable
         public static string TextoLegenda { get; set; } = "";
         
         static Task task;
-        public static void TelaProcessando(Form owner)
+        public static void Exibir()
         {
             Processando = true;
             if (task != null && !task.IsCompleted) return; // Encerra se tela de processamento já estiver em execução
 
-            Thread th = new Thread(() => 
-            { 
+            task = new Task(() =>
+            {
                 int tick = Environment.TickCount;
                 using (frmProcessando frm = new frmProcessando())
                 {
@@ -53,15 +53,10 @@ namespace DataGridDataTable
                         tick = Environment.TickCount;
                         while (!Processando && Environment.TickCount - tick < FecharMilisegundos) Application.DoEvents(); // Tolera N milésimos antes do fechamento
                         if (Processando) goto ContinuarTelaProcessamento; // Se entrou em um novo processamento, evita o fechamento da tela.
-
-                        if (owner != null)
-                            owner.Invoke(new MethodInvoker(() => owner.Focus()));
                     }
                 }
             });
-
-            th.SetApartmentState(ApartmentState.MTA);
-            th.Start();
+            task.Start();
         }
         #endregion
 

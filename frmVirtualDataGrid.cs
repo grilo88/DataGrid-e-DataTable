@@ -19,7 +19,7 @@ namespace DataGridDataTable
         {
             InitializeComponent();
             vdg = new FastDataGrid(dg);
-            dal = new DAL(this);
+            dal = new DAL();
         }
 
         private async void BtnCarregar_Click(object sender, EventArgs e)
