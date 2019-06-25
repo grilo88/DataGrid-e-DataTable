@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,7 +16,7 @@ namespace DataGridDataTable
     {
         MySql = 1,
         MsSql = 2,
-        SqLite = 3
+        SqLite = 3,
     }
 
     public enum CondicaoPesquisa
@@ -100,7 +101,7 @@ namespace DataGridDataTable
                     strConexao = sb_sqlite.ToString();
                     break;
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
         }
 
@@ -115,7 +116,7 @@ namespace DataGridDataTable
                 case Banco.SqLite:
                     return ((SQLiteConnection)con).OpenAsync();
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
         }
 
@@ -130,7 +131,7 @@ namespace DataGridDataTable
                 case Banco.SqLite:
                     return new SQLiteConnection(conexao);
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
         }
 
@@ -145,7 +146,7 @@ namespace DataGridDataTable
                 case Banco.SqLite:
                     return new SQLiteCommand((SQLiteConnection)con);
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
         }
 
@@ -195,7 +196,7 @@ namespace DataGridDataTable
                                 select += $"TOP({limite}) ";
                             break;
                         default:
-                            throw new NotImplementedException(nameof(Banco));
+                            throw new NotImplementedException(Banco.ToString());
                     }
 
                     select += $"{cols} FROM {PalavraBanco(dt.TableName)}";
@@ -256,7 +257,7 @@ namespace DataGridDataTable
                     bd = PalavraBanco(con.Database) + (ponto ? ".." : "");
                     break;
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
             return bd;
         }
@@ -278,7 +279,7 @@ namespace DataGridDataTable
                     palavra = $"[{palavra}]";
                     break;
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
             return palavra;
         }
@@ -311,7 +312,7 @@ namespace DataGridDataTable
                     valor = $"'{valor}'";
                     break;
                 default:
-                    throw new NotImplementedException(nameof(Banco));
+                    throw new NotImplementedException(Banco.ToString());
             }
 
             return valor;
@@ -357,7 +358,7 @@ namespace DataGridDataTable
                             com.Transaction = con.BeginTransaction(IsolationLevel.ReadCommitted);
                             break;
                         default:
-                            throw new NotImplementedException(nameof(Banco));
+                            throw new NotImplementedException(Banco.ToString());
                     }
 
                     DataColumn id = dt.Columns.Cast<DataColumn>().Where(x => x.AutoIncrement).FirstOrDefault();
@@ -471,7 +472,7 @@ namespace DataGridDataTable
                                         // Não dá suporte para LIMIT na instrução DELETE
                                         break;
                                     default:
-                                        throw new NotImplementedException(nameof(Banco));
+                                        throw new NotImplementedException(Banco.ToString());
                                 }
 
                                 delete +=
@@ -514,7 +515,7 @@ namespace DataGridDataTable
                                     // Não dá suporte para LIMIT na instrução UPDATE
                                     break;
                                 default:
-                                    throw new NotImplementedException(nameof(Banco));
+                                    throw new NotImplementedException(Banco.ToString());
                             }
 
                             DataColumn[] cols = SelecionarColunas(alt, r, false);
@@ -600,12 +601,15 @@ namespace DataGridDataTable
         }
 
         #region Sistema de Pesquisa
-        Timer tmrPesquisa = new Timer();
+        System.Timers.Timer tmrPesquisa = new System.Timers.Timer();
+
         public void Pesquisar(DataTable dt, string texto, bool diferenteDe, CondicaoPesquisa condicao, params DataColumn[] colunas)
         {
             tmrPesquisa.Stop();
-            tmrPesquisa.Interval = 500; // Aciona o evento após X milisegundos
-            tmrPesquisa.Tick += (sender, _e) =>
+            tmrPesquisa.Dispose();
+            tmrPesquisa = new System.Timers.Timer();
+            tmrPesquisa.Interval = 500; // Inicia a pesquisa após X milisegundos
+            tmrPesquisa.Elapsed += (sender, _e) =>
             {
                 tmrPesquisa.Stop();
                 OnPesquisa(new PesquisaEventArgs(PesquisarInterno(dt, texto, diferenteDe, condicao, colunas)));

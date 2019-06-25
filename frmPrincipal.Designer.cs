@@ -45,7 +45,8 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.pnDg = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnDgVScroll = new System.Windows.Forms.Panel();
+            this.chkModoSelecao = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -57,9 +58,9 @@
             this.dg.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.dg.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dg.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dg.Location = new System.Drawing.Point(10, 10);
+            this.dg.Location = new System.Drawing.Point(0, 0);
             this.dg.Name = "dg";
-            this.dg.Size = new System.Drawing.Size(632, 252);
+            this.dg.Size = new System.Drawing.Size(602, 272);
             this.dg.TabIndex = 0;
             this.dg.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.Dg_CellPainting);
             this.dg.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.Dg_RowPostPaint);
@@ -194,6 +195,7 @@
             this.groupBox1.Controls.Add(this.chkDiferenteDe);
             this.groupBox1.Controls.Add(this.txtPesquisar);
             this.groupBox1.Controls.Add(this.cboCondicaoPesquisa);
+            this.groupBox1.Controls.Add(this.chkModoSelecao);
             this.groupBox1.Location = new System.Drawing.Point(39, 81);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(652, 73);
@@ -226,21 +228,36 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnDg.BackColor = System.Drawing.Color.Green;
-            this.pnDg.Controls.Add(this.panel1);
+            this.pnDg.Controls.Add(this.pnDgVScroll);
             this.pnDg.Controls.Add(this.dg);
             this.pnDg.Location = new System.Drawing.Point(39, 160);
             this.pnDg.Name = "pnDg";
-            this.pnDg.Padding = new System.Windows.Forms.Padding(10);
+            this.pnDg.Padding = new System.Windows.Forms.Padding(0, 0, 50, 0);
             this.pnDg.Size = new System.Drawing.Size(652, 272);
             this.pnDg.TabIndex = 15;
+            this.pnDg.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PnDg_MouseUp);
             // 
-            // panel1
+            // pnDgVScroll
             // 
-            this.panel1.BackColor = System.Drawing.Color.SpringGreen;
-            this.panel1.Location = new System.Drawing.Point(642, 34);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(9, 20);
-            this.panel1.TabIndex = 1;
+            this.pnDgVScroll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnDgVScroll.BackColor = System.Drawing.Color.SpringGreen;
+            this.pnDgVScroll.Location = new System.Drawing.Point(605, 80);
+            this.pnDgVScroll.Name = "pnDgVScroll";
+            this.pnDgVScroll.Size = new System.Drawing.Size(44, 20);
+            this.pnDgVScroll.TabIndex = 1;
+            this.pnDgVScroll.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PnDgVScroll_MouseDown);
+            this.pnDgVScroll.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PnDgVScroll_MouseMove);
+            // 
+            // chkModoSelecao
+            // 
+            this.chkModoSelecao.AutoSize = true;
+            this.chkModoSelecao.BackColor = System.Drawing.Color.Transparent;
+            this.chkModoSelecao.Location = new System.Drawing.Point(539, 53);
+            this.chkModoSelecao.Name = "chkModoSelecao";
+            this.chkModoSelecao.Size = new System.Drawing.Size(93, 17);
+            this.chkModoSelecao.TabIndex = 12;
+            this.chkModoSelecao.Text = "Modo seleção";
+            this.chkModoSelecao.UseVisualStyleBackColor = false;
             // 
             // frmPrincipal
             // 
@@ -291,7 +308,8 @@
         private System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.Panel pnDg;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel pnDgVScroll;
+        private System.Windows.Forms.CheckBox chkModoSelecao;
     }
 }
 
