@@ -38,5 +38,10 @@ namespace DataGridDataTable
             vdg.DataSource = new DataTable("Tabela");
             vdg.DataSource = await dal.Carregar(vdg.DataSource);
         }
+
+        private void FrmVirtualDataGrid_Load(object sender, EventArgs e)
+        {
+            Util.DefinirTemaEscuro(this);
+        }
     }
 }

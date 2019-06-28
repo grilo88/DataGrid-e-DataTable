@@ -42,15 +42,18 @@
             this.label2 = new System.Windows.Forms.Label();
             this.chkDiferenteDe = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.chkModoSelecao = new System.Windows.Forms.CheckBox();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.pnDg = new System.Windows.Forms.Panel();
             this.pnDgVScroll = new System.Windows.Forms.Panel();
-            this.chkModoSelecao = new System.Windows.Forms.CheckBox();
+            this.pnForm = new System.Windows.Forms.Panel();
+            this.lblTitulo = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dg)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.pnDg.SuspendLayout();
+            this.pnForm.SuspendLayout();
             this.SuspendLayout();
             // 
             // dg
@@ -62,14 +65,11 @@
             this.dg.Name = "dg";
             this.dg.Size = new System.Drawing.Size(602, 272);
             this.dg.TabIndex = 0;
-            this.dg.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.Dg_CellPainting);
-            this.dg.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.Dg_RowPostPaint);
-            this.dg.RowPrePaint += new System.Windows.Forms.DataGridViewRowPrePaintEventHandler(this.Dg_RowPrePaint);
             // 
             // btnCarregar
             // 
-            this.btnCarregar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnCarregar.Location = new System.Drawing.Point(39, 438);
+            this.btnCarregar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnCarregar.Location = new System.Drawing.Point(45, 425);
             this.btnCarregar.Name = "btnCarregar";
             this.btnCarregar.Size = new System.Drawing.Size(116, 23);
             this.btnCarregar.TabIndex = 1;
@@ -79,8 +79,8 @@
             // 
             // btnAplicar
             // 
-            this.btnAplicar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAplicar.Location = new System.Drawing.Point(584, 438);
+            this.btnAplicar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnAplicar.Location = new System.Drawing.Point(590, 425);
             this.btnAplicar.Name = "btnAplicar";
             this.btnAplicar.Size = new System.Drawing.Size(107, 23);
             this.btnAplicar.TabIndex = 2;
@@ -90,8 +90,8 @@
             // 
             // button1
             // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(453, 43);
+            this.button1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.button1.Location = new System.Drawing.Point(459, 45);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(107, 23);
             this.button1.TabIndex = 3;
@@ -105,7 +105,7 @@
             this.virtualDataGridToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(729, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(719, 24);
             this.menuStrip1.TabIndex = 4;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -118,8 +118,8 @@
             // 
             // btnRecarregar
             // 
-            this.btnRecarregar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnRecarregar.Location = new System.Drawing.Point(161, 438);
+            this.btnRecarregar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnRecarregar.Location = new System.Drawing.Point(167, 425);
             this.btnRecarregar.Name = "btnRecarregar";
             this.btnRecarregar.Size = new System.Drawing.Size(116, 23);
             this.btnRecarregar.TabIndex = 5;
@@ -129,8 +129,8 @@
             // 
             // btnGerarRows
             // 
-            this.btnGerarRows.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGerarRows.Location = new System.Drawing.Point(584, 43);
+            this.btnGerarRows.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnGerarRows.Location = new System.Drawing.Point(590, 45);
             this.btnGerarRows.Name = "btnGerarRows";
             this.btnGerarRows.Size = new System.Drawing.Size(107, 23);
             this.btnGerarRows.TabIndex = 6;
@@ -188,25 +188,35 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.chkDiferenteDe);
             this.groupBox1.Controls.Add(this.txtPesquisar);
             this.groupBox1.Controls.Add(this.cboCondicaoPesquisa);
             this.groupBox1.Controls.Add(this.chkModoSelecao);
-            this.groupBox1.Location = new System.Drawing.Point(39, 81);
+            this.groupBox1.Location = new System.Drawing.Point(45, 68);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(652, 73);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Pesquisar";
             // 
+            // chkModoSelecao
+            // 
+            this.chkModoSelecao.AutoSize = true;
+            this.chkModoSelecao.BackColor = System.Drawing.Color.Transparent;
+            this.chkModoSelecao.Location = new System.Drawing.Point(539, 53);
+            this.chkModoSelecao.Name = "chkModoSelecao";
+            this.chkModoSelecao.Size = new System.Drawing.Size(93, 17);
+            this.chkModoSelecao.TabIndex = 12;
+            this.chkModoSelecao.Text = "Modo seleção";
+            this.chkModoSelecao.UseVisualStyleBackColor = false;
+            // 
             // btnCancelar
             // 
-            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(471, 438);
+            this.btnCancelar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnCancelar.Location = new System.Drawing.Point(477, 425);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(107, 23);
             this.btnCancelar.TabIndex = 13;
@@ -214,23 +224,21 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.BtnCancelar_Click);
             // 
-            // statusStrip1
+            // statusStrip
             // 
-            this.statusStrip1.Location = new System.Drawing.Point(0, 490);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(729, 22);
-            this.statusStrip1.TabIndex = 14;
-            this.statusStrip1.Text = "statusStrip1";
+            this.statusStrip.Location = new System.Drawing.Point(0, 455);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Size = new System.Drawing.Size(719, 22);
+            this.statusStrip.TabIndex = 14;
+            this.statusStrip.Text = "Barra de Status";
             // 
             // pnDg
             // 
-            this.pnDg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnDg.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnDg.BackColor = System.Drawing.Color.Green;
             this.pnDg.Controls.Add(this.pnDgVScroll);
             this.pnDg.Controls.Add(this.dg);
-            this.pnDg.Location = new System.Drawing.Point(39, 160);
+            this.pnDg.Location = new System.Drawing.Point(45, 147);
             this.pnDg.Name = "pnDg";
             this.pnDg.Padding = new System.Windows.Forms.Padding(0, 0, 50, 0);
             this.pnDg.Size = new System.Drawing.Size(652, 272);
@@ -248,34 +256,45 @@
             this.pnDgVScroll.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PnDgVScroll_MouseDown);
             this.pnDgVScroll.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PnDgVScroll_MouseMove);
             // 
-            // chkModoSelecao
+            // pnForm
             // 
-            this.chkModoSelecao.AutoSize = true;
-            this.chkModoSelecao.BackColor = System.Drawing.Color.Transparent;
-            this.chkModoSelecao.Location = new System.Drawing.Point(539, 53);
-            this.chkModoSelecao.Name = "chkModoSelecao";
-            this.chkModoSelecao.Size = new System.Drawing.Size(93, 17);
-            this.chkModoSelecao.TabIndex = 12;
-            this.chkModoSelecao.Text = "Modo seleção";
-            this.chkModoSelecao.UseVisualStyleBackColor = false;
+            this.pnForm.BackColor = System.Drawing.SystemColors.Control;
+            this.pnForm.Controls.Add(this.pnDg);
+            this.pnForm.Controls.Add(this.statusStrip);
+            this.pnForm.Controls.Add(this.btnCancelar);
+            this.pnForm.Controls.Add(this.menuStrip1);
+            this.pnForm.Controls.Add(this.groupBox1);
+            this.pnForm.Controls.Add(this.btnGerarRows);
+            this.pnForm.Controls.Add(this.btnRecarregar);
+            this.pnForm.Controls.Add(this.button1);
+            this.pnForm.Controls.Add(this.btnAplicar);
+            this.pnForm.Controls.Add(this.btnCarregar);
+            this.pnForm.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnForm.Location = new System.Drawing.Point(5, 30);
+            this.pnForm.Name = "pnForm";
+            this.pnForm.Size = new System.Drawing.Size(719, 477);
+            this.pnForm.TabIndex = 16;
+            // 
+            // lblTitulo
+            // 
+            this.lblTitulo.AutoSize = true;
+            this.lblTitulo.Location = new System.Drawing.Point(2, 3);
+            this.lblTitulo.Name = "lblTitulo";
+            this.lblTitulo.Size = new System.Drawing.Size(35, 13);
+            this.lblTitulo.TabIndex = 17;
+            this.lblTitulo.Text = "label3";
             // 
             // frmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
             this.ClientSize = new System.Drawing.Size(729, 512);
-            this.Controls.Add(this.pnDg);
-            this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.btnCancelar);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.btnGerarRows);
-            this.Controls.Add(this.btnRecarregar);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.btnAplicar);
-            this.Controls.Add(this.btnCarregar);
-            this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this.lblTitulo);
+            this.Controls.Add(this.pnForm);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "frmPrincipal";
+            this.Padding = new System.Windows.Forms.Padding(5, 30, 5, 5);
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dg)).EndInit();
@@ -284,6 +303,8 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.pnDg.ResumeLayout(false);
+            this.pnForm.ResumeLayout(false);
+            this.pnForm.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -306,10 +327,12 @@
         private System.Windows.Forms.CheckBox chkDiferenteDe;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnCancelar;
-        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.Panel pnDg;
         private System.Windows.Forms.Panel pnDgVScroll;
         private System.Windows.Forms.CheckBox chkModoSelecao;
+        private System.Windows.Forms.Panel pnForm;
+        private System.Windows.Forms.Label lblTitulo;
     }
 }
 

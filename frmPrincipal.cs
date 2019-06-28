@@ -44,87 +44,16 @@ namespace DataGridDataTable
         //    }
         //}
 
-        /// <summary>
-        /// Retorna todos os controles associados ao controle Pai recursivamente
-        /// </summary>
-        /// <param name="controles"></param>
-        /// <returns></returns>
-        public static IEnumerable<Control> RecursivoControles(IEnumerable<Control> controles)
-        {
-            foreach (Control controle in controles)
-            {
-                yield return controle;
-
-                if (controle.Controls.Count > 0)
-                {
-                    foreach (Control subitem in RecursivoControles(controle.Controls.Cast<Control>()))
-                    {
-                        yield return subitem;
-                    }
-                }
-            }
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Estilo do Form
-            this.BackColor = Color.FromArgb(40, 40, 40);
-            this.ForeColor = Color.White;
-
-            // Estilo do GroupBox Pesquisa
-            groupBox1.ForeColor = this.ForeColor;
-
-            RecursivoControles(this.Controls.Cast<Control>()).ToList().ForEach(ctrl =>
-            {
-                if (ctrl.BackColor != Color.Transparent) ctrl.BackColor = BackColor;
-                ctrl.ForeColor = ForeColor;
-            });
+            Util.DefinirTemaEscuro(pnForm);
 
             pnDgVScroll.BackColor = Color.SpringGreen;
 
-            // Estilo dos botões
-            Controls.OfType<Button>().ToList().ForEach(btn =>
-            {
-                btn.Paint += (_sender, _e) => // Pinta o botão
-                {
-                    _e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(60, 60, 60)), _e.ClipRectangle);
-                    _e.Graphics.DrawRectangle(new Pen(Color.WhiteSmoke, 2), _e.ClipRectangle);
-
-                    SizeF size =_e.Graphics.MeasureString(btn.Text, btn.Font);
-                    RectangleF rectText = new RectangleF(new PointF(), size);
-
-                    rectText.Location = new PointF(
-                        (_e.ClipRectangle.Width / 2 - size.Width / 2) + 1,
-                        (_e.ClipRectangle.Height / 2 - size.Height / 2) + 1);
-
-                    _e.Graphics.DrawString(
-                        btn.Text, btn.Font, new SolidBrush(Color.White), 
-                        rectText, StringFormat.GenericDefault);
-                };
-            });
-
-            // Estilo do DataGridView
+            // Barra de Rolagem personalizada
             pnDg.BackColor = Color.Green;
-            dg.BorderStyle = BorderStyle.None;
-            dg.CellBorderStyle = DataGridViewCellBorderStyle.Single;
-            dg.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
-            dg.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
-            dg.EnableHeadersVisualStyles = false; // Importante
-            dg.ColumnHeadersHeight = 60;
-            dg.ColumnHeadersDefaultCellStyle.BackColor = Color.Green;
-            dg.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dg.RowHeadersDefaultCellStyle.BackColor = Color.Green;
-            dg.RowHeadersDefaultCellStyle.ForeColor = Color.White;
-            dg.ForeColor = Color.DarkBlue;
-            dg.GridColor = BackColor;
-            dg.BackgroundColor = BackColor;
-            dg.DefaultCellStyle.SelectionBackColor = Color.Gray;
-            dg.DefaultCellStyle.SelectionForeColor = Color.White;
             dg.ScrollBars = ScrollBars.None;
             dg.Scroll += Dg_Scroll;
-
-            // Estilo do Barra de Status
-            statusStrip1.BackColor = Color.Green;
 
             // Resultado da Pesquisa
             dal.ResultadoPesquisa += (_sender, _e) => 
@@ -173,11 +102,12 @@ namespace DataGridDataTable
             cboCondicaoPesquisa.DataSource = Enum.GetValues(typeof(CondicaoPesquisa));
             cboCondicaoPesquisa.SelectedIndex = 5;
 
+            Show();
+            Refresh();
+
             // Carrega os dados para a Grid
             BtnCarregar_Click(sender, e);
         }
-
-        
 
         private async void BtnCarregar_Click(object sender, EventArgs e)
         {
@@ -266,35 +196,6 @@ namespace DataGridDataTable
                 dg.DataSource = null;
                 dt.RejectChanges();
                 dg.DataSource = dt;
-            }
-        }
-
-        private void Dg_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-        }
-
-        private void Dg_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
-        {
-            //((DataGridView)sender).Rows[e.RowIndex].
-        }
-
-        private void Dg_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
-        {
-            bool impar = e.RowIndex % 2 > 0;
-
-            Color Cor = BackColor;
-            Color ForeColor = Color.Gray;
-            int diff = 10;
-
-            if (impar)
-            {
-                ((DataGridView)sender).Rows[e.RowIndex].DefaultCellStyle.BackColor = Cor;
-                ((DataGridView)sender).Rows[e.RowIndex].DefaultCellStyle.ForeColor = ForeColor;
-            }
-            else
-            {
-                ((DataGridView)sender).Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(Cor.R - diff, Cor.G - diff, Cor.B - diff);
-                ((DataGridView)sender).Rows[e.RowIndex].DefaultCellStyle.ForeColor = ForeColor;
             }
         }
 

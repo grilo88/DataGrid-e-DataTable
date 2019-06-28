@@ -75,6 +75,7 @@
       <DependentUpon>frmVirtualDataGrid.cs</DependentUpon>
     </Compile>
     <Compile Include="FastDataGrid.cs" />
+    <Compile Include="Util.cs" />
     <EmbeddedResource Include="frmPrincipal.resx">
       <DependentUpon>frmPrincipal.cs</DependentUpon>
     </EmbeddedResource>
